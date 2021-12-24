@@ -6,7 +6,7 @@
 #include <string.h>
 
 
-void run(struct AST_NODE** ast);
+void execute(struct AST_NODE** ast);
 
 
 #endif

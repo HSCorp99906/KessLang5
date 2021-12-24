@@ -81,7 +81,7 @@ int main(int argc, char* argv[]) {
 
 	for (int i = 0; i < toklist.size - 2; ++i) {
 		struct AST_NODE** ast = parse(&parser, &nodelistSize);
-		run(ast);
+		execute(ast);
 		ast_destroy(&ast, nodelistSize);
 
 	}
