@@ -8,9 +8,9 @@ void execute(struct AST_NODE** ast) {
 	 * based on AST nodes.
 	 */
 
-	struct AST_NODE* tok = ast_locate(ast, "type");
+	struct AST_NODE* node = ast_locate(ast, "type");
 
-	if (strcmp(tok->value, "print-statement") == 0) {
-		printf("%s\n", tok->child->value);
+	if (strcmp(node->value, "print-statement") == 0) {
+		printf("%s\n", node->child->value);
 	}
 }
