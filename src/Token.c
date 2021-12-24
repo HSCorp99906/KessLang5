@@ -8,6 +8,12 @@ void init_tokenlist(toklist_t* tl) {
 
 
 void destroy_tokenlist(toklist_t* tl) {
+	for (int i = 0; i < tl->size; ++i) {
+		if (tl->tokens[i].heapAlloc) {
+			free(tl->tokens[i].tok);
+		}
+	}
+
 	free(tl->tokens);
 	tl->tokens = NULL;
 	tl->size = 0;
@@ -22,12 +28,13 @@ void add_element(toklist_t* tl, tok_t element) {
 }
 
 
-tok_t create_token(char* tok, toktype_t type, bool isint) {
+tok_t create_token(char* tok, toktype_t type, bool isint, bool heapAlloc) {
 	tok_t token = {
 		.type = type,
 		.isint = isint,
 		.tok = (char*)calloc(30, sizeof(char)),
 		.lastTok = false,
+		.heapAlloc = heapAlloc,
 	};
 
 	const char* eol = "\0";

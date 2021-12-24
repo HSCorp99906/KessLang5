@@ -31,7 +31,7 @@ void tokenize(toklist_t* toklist, struct Lexer* lexer, char* line) {
             size_t strsize = 1;
             char* str = (char*)malloc(sizeof(char));
 
-            add_element(toklist, create_token(part, T_PRINT, false));
+            add_element(toklist, create_token(part, T_PRINT, false, false));
 
             unsigned int stridx = 0;
 
@@ -58,7 +58,7 @@ void tokenize(toklist_t* toklist, struct Lexer* lexer, char* line) {
 				}
 			}
 
-            add_element(toklist, create_token(str, T_STR, false)); 
+            add_element(toklist, create_token(str, T_STR, false, true)); 
 
             str = NULL;
         } else if (strchr(part, '"') != NULL) {

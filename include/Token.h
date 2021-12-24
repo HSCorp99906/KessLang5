@@ -23,6 +23,7 @@ typedef struct Token {
 	toktype_t type;
 	bool isint;
 	bool lastTok;
+	bool heapAlloc;
 } tok_t;
 
 
@@ -36,6 +37,6 @@ typedef struct Tokenlist {
 void init_tokenlist(toklist_t* tl);
 void destroy_tokenlist(toklist_t* tl);
 void add_element(toklist_t* tl, tok_t element);
-tok_t create_token(char* tok, toktype_t type, bool isint);
+tok_t create_token(char* tok, toktype_t type, bool isint, bool heapAlloc);
 
 #endif

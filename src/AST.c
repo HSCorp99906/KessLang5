@@ -64,6 +64,9 @@ struct AST_NODE* ast_locate(struct AST_NODE** node, char key[]) {
 
 
 void ast_destroy(struct AST_NODE*** nodes, int s) {
+	free(ast_locate(*nodes, "type")->child);
+	ast_locate(*nodes, "type")->child = NULL;
+
 	for (int i = 0; i < s; ++i) {
 		struct AST_NODE* curNode = *nodes[i];
 		free(curNode);
