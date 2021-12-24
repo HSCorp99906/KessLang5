@@ -6,6 +6,7 @@
 #include "../include/Token.h"
 #include "../include/Lexer.h"
 #include "../include/Parser.h"
+#include "../include/Runtime.h"
 
 
 int main(int argc, char* argv[]) {
@@ -48,7 +49,6 @@ int main(int argc, char* argv[]) {
                 lineBufRelease = (char*)realloc(lineBufRelease, sizeof(char) * lbrSize);
                 if (lineBuf[curIdx] == ';') {
 					lineBufRelease[lbrSize] = '\0';
-					printf("%s\n", lineBufRelease);
 					tokenize(&toklist, &lexer, lineBufRelease);
                 	lbridx = 0;
 					lbrSize = 1;
@@ -79,15 +79,14 @@ int main(int argc, char* argv[]) {
 
 	size_t nodelistSize = 0;
 
-	while (true) {
+	for (int i = 0; i < toklist.size - 2; ++i) {
 		struct AST_NODE** ast = parse(&parser, &nodelistSize);
-		
-		if (ast == NULL) {
-			break;
-		}
-
+		run(ast);
 		ast_destroy(&ast, nodelistSize);
+
 	}
+
+	// run(ast);
 
     free(lineBuf);
     free(lineBufRelease);

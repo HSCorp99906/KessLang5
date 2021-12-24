@@ -19,12 +19,10 @@ struct AST_NODE** parse(struct Parser* parser, size_t* s) {
 					ast_insert(head_node, print_node, s);
 					print_node->child = (struct AST_NODE*)malloc(sizeof(struct AST_NODE));
 					init_node(print_node->child, "arg", parse_peek(*parser, parser->curIndex).tok, 0, false);
-
-					// printf("%s\n", print_node->child->value);
-
 					// free(print_node->child);
 
 					++parser->curIndex;
+					return head_node;
 					
 				} else {
 					ignore = false;
@@ -33,11 +31,6 @@ struct AST_NODE** parse(struct Parser* parser, size_t* s) {
 			case T_STR:
 				++parser->curIndex;
 				break;
-		}
-
-		if (parse_peek(*parser, parser->curIndex).type == T_END_STATEMENT && !(parse_peek(*parser, parser->curIndex).lastTok)) {
-			++i;
-			return head_node;
 		}
 	}
 

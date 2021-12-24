@@ -78,5 +78,7 @@ void tokenize(toklist_t* toklist, struct Lexer* lexer, char* line) {
 		}
 
         part = strtok(NULL, " ");
-    }
+	}
+
+	toklist->tokens[0].lastTok = true;
 }
