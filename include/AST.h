@@ -24,7 +24,7 @@ struct AST_NODE {
 
 struct AST_NODE** get_tree();
 void ast_init(struct AST_NODE** nodes);
-bool ast_insert(struct AST_NODE** dest, struct AST_NODE* src, int* s);
+bool ast_insert(struct AST_NODE** dest, struct AST_NODE* src, size_t* s);
 struct AST_NODE* ast_locate(struct AST_NODE** node, char key[]);
 uint32_t ast_hash(char* key);
 void init_node(struct AST_NODE* node, char* key, char* value, int32_t valueINT, bool uvi);

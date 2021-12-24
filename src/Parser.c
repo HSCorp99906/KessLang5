@@ -12,7 +12,18 @@ struct AST_NODE** parse(struct Parser* parser, size_t* s) {
 		switch (parser->tokenList.tokens[i].type) {
 			case T_PRINT:
 				if (!(ignore)) {
-					printf("%s\n", parse_peek(*parser, parser->curIndex + 2).tok);
+					printf("%s\n", parse_peek(*parser, parser->curIndex).tok);
+
+					struct AST_NODE* print_node = (struct AST_NODE*)malloc(sizeof(struct AST_NODE));
+					init_node(print_node, "type", "print-statement", 0, false);
+					ast_insert(head_node, print_node, s);
+					print_node->child = (struct AST_NODE*)malloc(sizeof(struct AST_NODE));
+					init_node(print_node->child, "arg", parse_peek(*parser, parser->curIndex).tok, 0, false);
+
+					printf("%s\n", print_node->child->value);
+
+					free(print_node->child);
+					free(parse_peek(*parser, parser->curIndex + 1).tok);
 
 					++parser->curIndex;
 					

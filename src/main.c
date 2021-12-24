@@ -74,6 +74,7 @@ int main(int argc, char* argv[]) {
 
 	struct Parser parser = {
 		.tokenList = toklist,
+		.curIndex = 0,
 	};
 
 	size_t nodelistSize = 0;

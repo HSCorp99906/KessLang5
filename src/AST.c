@@ -39,7 +39,7 @@ void init_node(struct AST_NODE* node, char* key, char* value, int32_t valueINT, 
 }
 
 
-bool ast_insert(struct AST_NODE** dest, struct AST_NODE* src, int* s) {
+bool ast_insert(struct AST_NODE** dest, struct AST_NODE* src, size_t* s) {
 	uint32_t index = src->checksum;
 
 	if (dest[index] != NULL) {

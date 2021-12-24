@@ -31,7 +31,7 @@ void tokenize(toklist_t* toklist, struct Lexer* lexer, char* line) {
             size_t strsize = 1;
             char* str = (char*)malloc(sizeof(char));
 
-            add_element(toklist, create_token("part", T_PRINT, false));
+            add_element(toklist, create_token(part, T_PRINT, false));
 
             unsigned int stridx = 0;
 
@@ -46,8 +46,19 @@ void tokenize(toklist_t* toklist, struct Lexer* lexer, char* line) {
 
 			str[stridx] = '\0';
 
-            printf("%s\n", str);
-            add_element(toklist, create_token("part", T_STR, false)); 
+			bool erase = false;
+
+			for (int i = 0; i < strlen(str); ++i) {
+				if (str[i] == '\n') {
+					erase = true;
+				}
+
+				if (erase) {
+					str[i] = 8;
+				}
+			}
+
+            add_element(toklist, create_token(str, T_STR, false)); 
 
             str = NULL;
         } else if (strchr(part, '"') != NULL) {
@@ -56,6 +67,10 @@ void tokenize(toklist_t* toklist, struct Lexer* lexer, char* line) {
 			// Empty.
 		} else if (strcmp(part, "EOL") == 0) {
 			// Empty.
+		} else if (strcmp(part, "push") == 0) {
+			// Empty.
+		} else if (strcmp(part, "pop") == 0) {
+			// printf("%s\n", part);
 		} else {
 			printf("InvalidSyntaxError: Invalid syntax.\nLine: %d\n", lexer->lineNum);
 			lexer->error = true;
