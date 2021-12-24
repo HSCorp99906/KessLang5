@@ -36,12 +36,12 @@ struct AST_NODE** parse(struct Parser* parser, size_t* s) {
 		}
 
 		if (parse_peek(*parser, parser->curIndex).type == T_END_STATEMENT && !(parse_peek(*parser, parser->curIndex).lastTok)) {
+			++i;
 			return head_node;
 		}
 	}
 
 	ast_destroy(&head_node, *s);
-
 	return NULL;
 }
 

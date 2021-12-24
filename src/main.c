@@ -79,7 +79,15 @@ int main(int argc, char* argv[]) {
 
 	size_t nodelistSize = 0;
 
-	parse(&parser, &nodelistSize);
+	while (true) {
+		struct AST_NODE** ast = parse(&parser, &nodelistSize);
+		
+		if (ast == NULL) {
+			break;
+		}
+
+		ast_destroy(&ast, nodelistSize);
+	}
 
     free(lineBuf);
     free(lineBufRelease);
