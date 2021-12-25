@@ -30,5 +30,6 @@ unsigned int hash(const char* key, size_t hashMapSize);
 void init(struct Var* var);
 bool insert(struct Var* var, struct Var** varTable, unsigned int* varHashes);
 struct Var* locate(struct Var** varTable, const char* key);
+void destroy(struct Var** varTable, struct VarData* vdata); 
 
 #endif
