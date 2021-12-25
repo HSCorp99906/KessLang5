@@ -40,6 +40,7 @@ int main(int argc, char* argv[]) {
 
     unsigned long lbridx = 0;
     unsigned int curIdx = 0;
+	unsigned long count = 0;
 
     while (getline(&lineBuf, &lineBufSize, fp) != -1 && !(lexer.error)) {
         while (curIdx < strlen(lineBuf) - 2) {
@@ -50,6 +51,7 @@ int main(int argc, char* argv[]) {
                 if (lineBuf[curIdx] == ';') {
 					lineBufRelease[lbrSize] = '\0';
 					tokenize(&toklist, &lexer, lineBufRelease);
+					++count;
                 	lbridx = 0;
 					lbrSize = 1;
 					lineBufRelease = (char*)realloc(lineBufRelease, sizeof(char));
@@ -79,14 +81,12 @@ int main(int argc, char* argv[]) {
 
 	size_t nodelistSize = 0;
 
-	for (int i = 0; i < toklist.size - 2; ++i) {
+	for (int i = 0; i < toklist.elements - count; ++i) {
 		struct AST_NODE** ast = parse(&parser, &nodelistSize);
 		execute(ast);
 		ast_destroy(&ast, nodelistSize);
 
 	}
-
-	// run(ast);
 
     free(lineBuf);
     free(lineBufRelease);
