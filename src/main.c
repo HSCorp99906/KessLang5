@@ -7,6 +7,14 @@
 #include "../include/Lexer.h"
 #include "../include/Parser.h"
 #include "../include/Runtime.h"
+#include "../include/split.h"
+
+
+/*
+ * Sefaults can be caused by including a line
+ * and not making a token of that line.
+ * Either make a token for that line or reject it.
+ */
 
 
 int main(int argc, char* argv[]) {
@@ -20,8 +28,8 @@ int main(int argc, char* argv[]) {
         return 0;
     }
 
-    size_t lineBufSize = 5;
-    char* lineBuf = (char*)malloc(sizeof(char) * lineBufSize);
+    size_t lineBufSize = 1;
+    char* lineBuf = (char*)malloc(sizeof(char));
 
     size_t lbrSize = 1;
     char* lineBufRelease = (char*)malloc(sizeof(char));
@@ -29,7 +37,7 @@ int main(int argc, char* argv[]) {
     FILE* fp = fopen(argv[1], "r");
 
     struct Lexer lexer = {
-        .lineNum = 1,
+        .lineNum = 0,
         .colNum = 0,
         .error = false,
     };
@@ -42,38 +50,59 @@ int main(int argc, char* argv[]) {
     unsigned int curIdx = 0;
 	unsigned long count = 0;  // This value fixed sefault.
 
+	size_t splitBufSize = 1;
+	char* splitBuffer = (char*)malloc(sizeof(char));
+	unsigned long splitBufIdx = 0;
+	bool firstRun = true;
+
     while (getline(&lineBuf, &lineBufSize, fp) != -1 && !(lexer.error)) {
-		if (strlen(lineBuf) - 1 == 0) {
-			continue;
+		unsigned int curIdx = 0;
+		splitBufSize = 1;
+		splitBufIdx = 0;
+		bool started = true;
+
+		if (!(firstRun)) {
+			splitBuffer = (char*)realloc(splitBuffer, sizeof(char));
 		}
 
-        while (curIdx < strlen(lineBuf) - 2) {
-            for (curIdx; curIdx < strlen(lineBuf); ++curIdx) {
-                lineBufRelease[lbridx] = lineBuf[curIdx];
-                ++lbrSize;
-                lineBufRelease = (char*)realloc(lineBufRelease, sizeof(char) * lbrSize);
-                if (lineBuf[curIdx] == ';') {
-					lineBufRelease[lbrSize] = '\0';
-					tokenize(&toklist, &lexer, lineBufRelease);
-					++count;
-                	lbridx = 0;
-					lbrSize = 1;
-					lineBufRelease = (char*)realloc(lineBufRelease, sizeof(char));
-                    curIdx += 2;
-                    break;
-                } else {
-					++lbridx;
+		while (curIdx < strlen(lineBuf) - 1) {
+			++lexer.lineNum;
+
+			for (curIdx; curIdx < strlen(lineBuf); ++curIdx) {
+				splitBuffer[splitBufIdx] = lineBuf[curIdx];
+				++splitBufIdx;
+				++splitBufSize;
+				splitBuffer = (char*)realloc(splitBuffer, sizeof(char) * splitBufSize);
+
+				if (firstRun) {
+					firstRun = false;
 				}
 
-            }
-        }
 
-		curIdx = 0;
-        ++lexer.lineNum;
+				if (lineBuf[curIdx] == ';') {
+					if (!(started)) {
+						splitBuffer[0] = 0x08;
+					} else {
+						started = false;
+					}
+
+					splitBuffer[splitBufSize - 1] = '\0';
+					splitBufIdx = 0;
+					splitBufSize = 1;
+					tokenize(&toklist, &lexer, splitBuffer);
+					splitBuffer = (char*)realloc(splitBuffer, sizeof(char));
+				}
+			}
+		}
+
+		// tokenize(&toklist, &lexer, lineBuf);
     }
+
+	free(splitBuffer);
 
     if (lexer.error) { 
         fclose(fp);
+		free(lineBufRelease);
         destroy_tokenlist(&toklist);
         return -1;
     }
@@ -85,7 +114,7 @@ int main(int argc, char* argv[]) {
 
 	size_t nodelistSize = 0;
 
-	for (int i = 0; i < toklist.elements - count; ++i) { 
+	for (int i = 0; i < count + 1; ++i) { 
 		/*
 		 * Fixed segfault by subtracting element count by line count.
 		 * No idea how that fixed it.

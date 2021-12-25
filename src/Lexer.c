@@ -1,84 +1,111 @@
 #include "../include/Lexer.h"
 
 
+char* peek(unsigned int index, char* line) {
+	return &line[index];
+}
+
+
 void tokenize(toklist_t* toklist, struct Lexer* lexer, char* line) {
+	char* keywords[] = {
+		"print",
+	};
 
-    char linecpy[strlen(line)];
-    strcpy(linecpy, line);
-    strcat(linecpy, " EOL");
 
-    char* part = strtok(linecpy, " ");
+	bool captureString = false;
+	unsigned int quoteCount = 0;
+	
+	/*
+	bool captureSpace = true;
+	unsigned int spaceCount = 0;
 
-	int lastIndex = 7;
-
-	bool semicolonFound = false;
-
-	for (int i = 0; i < strlen(line) - 2; ++i) {
-		if (semicolonFound) {
-			printf("SyntaxError: Invalid syntax.\nLine %d\n", lexer->lineNum);
-			lexer->error = true;
-			part = NULL;
-			break;
-		}
-
-		if (line[i] == ';') {
-			semicolonFound = true;
+	for (int i = 0; i < strlen(line); ++i) {
+		if (line[i] == ' ' && captureSpace) {
+			captureSpace = false;
+			++spaceCount;
+		} else if (line[i] != ' ') {
+			captureSpace = true;
 		}
 	}
 
-    while (part != NULL) {
-        if (strcmp(part, "print") == 0) {
-            size_t strsize = 1;
-            char* str = (char*)malloc(sizeof(char));
+	printf("%d\n", spaceCount);
+	*/
+	
+	unsigned long bufIdx = 0;
+	size_t bufsize = 1;
+	char* buffer = (char*)malloc(sizeof(char));
+	
+	size_t bufsize1 = 1;
+	unsigned long bufIdx1 = 0;
+	char* checkBuffer = (char*)malloc(sizeof(char));
 
-            add_element(toklist, create_token(part, T_PRINT, false, false));
+	bool tokensOk = true;
 
-            unsigned int stridx = 0;
+	for (int i = 0; i < strlen(line); ++i) {
+		if (line[i] != ' ') {
+			checkBuffer[bufIdx1] = line[i];
+			++bufsize1;
+			++bufIdx1;
+			checkBuffer = (char*)realloc(checkBuffer, sizeof(char) * bufsize1);
+		}
 
-            for (int i = lastIndex; i < strlen(line) && line[i] != '"'; ++i) {
-                str[stridx] = line[i];
-                ++strsize;
-                ++stridx;
-                str = (char*)realloc(str, sizeof(char) * strsize);
-            }
-
-			int lineIndex = 0;
-
-			str[stridx] = '\0';
-
-			bool erase = false;
-
-			for (int i = 0; i < strlen(str); ++i) {
-				if (str[i] == '\n') {
-					erase = true;
-				}
-
-				if (erase) {
-					str[i] = 8;
-				}
+		if (line[i] == ' ') {
+			if (strcmp(checkBuffer, "print") != 0) {
+				tokensOk = false;
 			}
 
-            add_element(toklist, create_token(str, T_STR, false, true)); 
-
-            str = NULL;
-        } else if (strchr(part, '"') != NULL) {
-			// Empty.
-		} else if (strchr(part, ';') != NULL) {
-			// Empty.
-		} else if (strcmp(part, "EOL") == 0) {
-			// Empty.
-		} else if (strcmp(part, "push") == 0) {
-			// Empty.
-		} else if (strcmp(part, "pop") == 0) {
-			// printf("%s\n", part);
-		} else {
-			printf("InvalidSyntaxError: Invalid syntax.\nLine: %d\n", lexer->lineNum);
-			lexer->error = true;
-			break;
+			bufIdx = 0;
+			bufsize1 = 2;
+			checkBuffer = (char*)realloc(checkBuffer, sizeof(char) * bufsize);
 		}
-
-        part = strtok(NULL, " ");
 	}
 
-	toklist->tokens[0].lastTok = true;
+	free(checkBuffer);
+
+	if (!(tokensOk)) {
+		printf("UnrecognizedTokenError: Encountered an unexpected token.\nLine %d\n", lexer->lineNum);
+		lexer->error = true;
+	}
+
+	while (lexer->colNum < strlen(line) && tokensOk) {
+		lexer->curChar = line[lexer->colNum];
+
+		if (lexer->curChar == ' ' && !(captureString)) {
+			++lexer->colNum;
+			continue;
+		} else if (captureString) {
+			if (lexer->curChar == '"') {
+				++quoteCount;
+			}
+
+			if (quoteCount == 2) {
+				captureString = false;
+				buffer[0] = 0x08;
+				buffer[1] = 0x08;
+
+		
+				char* str = (char*)malloc(sizeof(char) * (bufsize + 1));
+				strcpy(str, buffer);
+				str[bufsize - 1] = '\0';
+				add_element(toklist, create_token(str, T_STR, false, true));
+			}
+		}
+
+		buffer[bufIdx] = lexer->curChar;
+		++bufsize;
+		++bufIdx;
+		buffer = (char*)realloc(buffer, sizeof(char) * bufsize);
+
+		if (strcmp(buffer, "print") == 0) {
+			captureString = true;
+			bufsize = 1;
+			bufIdx = 0;
+			buffer = (char*)realloc(buffer, sizeof(char));
+			add_element(toklist, create_token("print", T_PRINT, false, false));
+		}
+
+		++lexer->colNum;
+	}
+
+	free(buffer);
 }

@@ -16,6 +16,7 @@ typedef enum TokenType {
 	T_QUOTE,
 	T_END_STATEMENT,
 	T_REDIRECT,
+	T_EOL,
 	T_PUSH,
 } toktype_t;
 
