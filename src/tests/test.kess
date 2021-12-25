@@ -1,1 +1,1 @@
-print "hello";
+push 12 => $var;

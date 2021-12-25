@@ -7,7 +7,6 @@
 #include "../include/Lexer.h"
 #include "../include/Parser.h"
 #include "../include/Runtime.h"
-#include "../include/split.h"
 
 
 /*
@@ -99,6 +98,8 @@ int main(int argc, char* argv[]) {
     }
 
 	free(splitBuffer);
+
+	lexer.error = true;
 
     if (lexer.error) { 
         fclose(fp);
