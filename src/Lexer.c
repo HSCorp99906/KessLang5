@@ -212,6 +212,7 @@ void tokenize(toklist_t* toklist, struct Lexer* lexer, char* line) {
 		++bufIdx;
 		++lexer->colNum;
 		buffer = (char*)realloc(buffer, sizeof(char) * bufsize);
+		printf("%s\n", buffer);
 
 		if (strcmp(buffer, "print") == 0) {
 			captureString = true;

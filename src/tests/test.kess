@@ -1,1 +1,2 @@
 push 12 => $var;
+print "hi";

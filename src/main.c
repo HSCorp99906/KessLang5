@@ -55,12 +55,16 @@ int main(int argc, char* argv[]) {
 	bool firstRun = true;
 
     while (getline(&lineBuf, &lineBufSize, fp) != -1 && !(lexer.error)) {
+		lexer.colNum = 0;
 		unsigned int curIdx = 0;
 		splitBufSize = 1;
 		splitBufIdx = 0;
 		bool started = true;
 
 		if (!(firstRun)) {
+			memset(splitBuffer, '\0', splitBufSize);
+			splitBufSize = 1;
+			splitBufIdx = 0;
 			splitBuffer = (char*)realloc(splitBuffer, sizeof(char));
 		}
 
@@ -72,6 +76,7 @@ int main(int argc, char* argv[]) {
 				++splitBufIdx;
 				++splitBufSize;
 				splitBuffer = (char*)realloc(splitBuffer, sizeof(char) * splitBufSize);
+				splitBuffer[splitBufSize] = '\0';
 
 				if (firstRun) {
 					firstRun = false;
