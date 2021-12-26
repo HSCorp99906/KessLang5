@@ -1,51 +1,69 @@
 #include "../include/Var.h"
 
 
-unsigned int hash(const char* key, size_t hashMapSize) {
+unsigned int var_hash(const char* key, size_t size) {
 	unsigned int checksum = 0;
 
 	for (int i = 0; i < strlen(key); ++i) {
-		checksum += (unsigned int)key[i] * 35;
+		checksum += (unsigned int)key[i];
 	}
 
-	return checksum % hashMapSize;
+	return (checksum) % size + 1;
 }
 
 
-void init(struct Var** varTable, size_t size) {
+void var_init(struct Var** varTable, size_t size) {
 	for (int i = 0; i < size; ++i) {
 		varTable[i] = NULL;
 	}
 }
 
 
-void insert(struct Var* var, struct Var** varTable, struct VarData* varData) {
-	unsigned int index = hash(var->key);
+bool var_insert(struct Var* var, struct Var** varTable, struct VarData* varData, size_t size) {
+    unsigned int index = var_hash(var->key, size);
 
-	varData->varHashes[varData->varHashesIdx] = index;
-	++varData->varHashesIdx;
-	++varData->varHashesSize;
-	varData->varHashes = (unsigned int*)realloc(sizeof(unsigned int) * varHashesSize);
+    varData->varHashes[varData->varHashesIdx] = index;
+    ++varData->varHashesIdx;
+    ++varData->varHashesSize;
+	printf("%d\n", varData->varHashesSize);
+    varData->varHashes = (unsigned int*)realloc(varData->varHashes, sizeof(unsigned int) * varData->varHashesSize);
 
-	if (varTable[index] != NULL) {
-		return false;
-	}
+    varData->varHashes[varData->varHashesIdx] = size;
+    ++varData->varHashesIdx;
+    ++varData->varHashesSize;
+    varData->varHashes = (unsigned int*)realloc(varData->varHashes, sizeof(unsigned int) * varData->varHashesSize);
 
-	varTable[index] = var;
-	return true;
+    if (varTable[((index) ^ (size)) / 2] != NULL) {
+        return false;
+    }
+
+    varTable[((index) ^ (size)) / 2] = var;
+    return true;
 }
 
 
-struct Var* locate(struct Var** varTable, const char* key) {
-	if (varTable[index] == NULL) {
+struct Var* var_locate(struct Var** varTable, struct VarData vdata, const char* key, size_t varTableSize) {
+	unsigned int index = var_hash(key, varTableSize);
+	unsigned int trueIndex;
+	unsigned int lstIdx;
+
+	for (int i = 0; i < vdata.varHashesSize; ++i) {
+		trueIndex = vdata.varHashes[i];
+		if (trueIndex == index) {
+			lstIdx = i;
+			break;
+		}
+	}
+
+	if (varTable[((vdata.varHashes[lstIdx]) ^ (vdata.varHashes[lstIdx + 1])) / 2] == NULL) {
 		return NULL;
 	}
 
-	return varTable[index];
+	return varTable[((vdata.varHashes[lstIdx]) ^ (vdata.varHashes[lstIdx + 1])) / 2];
 }
 
 
-void destroy(struct Var** varTable, struct VarData* vdata) {
+void var_destroy(struct Var** varTable, struct VarData* vdata) {
 	for (int i = 0; i < vdata->varHashesSize; ++i) {
 		free(varTable[vdata->varHashes[i]]);
 		varTable[i] = NULL;
@@ -53,4 +71,5 @@ void destroy(struct Var** varTable, struct VarData* vdata) {
 
 	free(varTable);
 	free(vdata->varHashes);
+	vdata->varHashes = NULL;
 }
