@@ -50,59 +50,25 @@ int main(int argc, char* argv[]) {
 	unsigned long count = 0;  // This value fixed sefault.
 
 	size_t splitBufSize = 1;
-	char* splitBuffer = (char*)malloc(sizeof(char));
-	unsigned long splitBufIdx = 0;
-	bool firstRun = true;
 
-    while (getline(&lineBuf, &lineBufSize, fp) != -1 && !(lexer.error)) {
-		lexer.colNum = 0;
-		unsigned int curIdx = 0;
-		splitBufSize = 1;
-		splitBufIdx = 0;
-		bool started = true;
+	char* buffer;
 
-		if (!(firstRun)) {
-			memset(splitBuffer, '\0', splitBufSize);
-			splitBufSize = 1;
-			splitBufIdx = 0;
-			splitBuffer = (char*)realloc(splitBuffer, sizeof(char));
+	fseek(fp, 0, SEEK_END);
+	size_t filesize = ftell(fp);
+	fseek(fp, 0, SEEK_SET);
+
+	buffer = (char*)malloc(sizeof(char) * filesize);
+	fread(buffer, filesize, 1, fp);
+	
+	for (int i = 0; i < strlen(buffer); ++i) {
+		if (buffer[i] == '\n') {
+			buffer[i] = ' ';
 		}
+	}
+	
+	tokenize(&toklist, &lexer, buffer);
 
-		while (curIdx < strlen(lineBuf) - 1) {
-			++lexer.lineNum;
-
-			for (curIdx; curIdx < strlen(lineBuf); ++curIdx) {
-				splitBuffer[splitBufIdx] = lineBuf[curIdx];
-				++splitBufIdx;
-				++splitBufSize;
-				splitBuffer = (char*)realloc(splitBuffer, sizeof(char) * splitBufSize);
-				splitBuffer[splitBufSize] = '\0';
-
-				if (firstRun) {
-					firstRun = false;
-				}
-
-
-				if (lineBuf[curIdx] == ';') {
-					if (!(started)) {
-						splitBuffer[0] = 0x08;
-					} else {
-						started = false;
-					}
-
-					splitBuffer[splitBufSize - 1] = '\0';
-					splitBufIdx = 0;
-					splitBufSize = 1;
-					tokenize(&toklist, &lexer, splitBuffer);
-					splitBuffer = (char*)realloc(splitBuffer, sizeof(char));
-				}
-			}
-		}
-
-		// tokenize(&toklist, &lexer, lineBuf);
-    }
-
-	free(splitBuffer);
+	free(buffer);
 
 	lexer.error = true;
 

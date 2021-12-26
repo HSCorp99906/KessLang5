@@ -13,8 +13,9 @@ char* peek(unsigned int index, char* line) {
 
 
 void tokenize(toklist_t* toklist, struct Lexer* lexer, char* line) {
-	bool captureString = false;
 	unsigned int quoteCount = 0;
+
+	line[strlen(line)] = '\0';
 
 	char keywords[2][25] = {
 		"print",
@@ -127,108 +128,105 @@ void tokenize(toklist_t* toklist, struct Lexer* lexer, char* line) {
 	
 	bool push_inst = false;
 	bool pop_inst = false;
+	bool print_inst = false;
 
 	
 	/*********************************************
 	 *             CONDITIONS 
 	 *********************************************/
 
-	bool submitValue = false;  // Submits token value if this is true.
 	bool forbidIntCapture = false;
+	bool captureString = false;
+	bool alloc = false;
 
 	/*********************************************
 	 *              VALUES 
 	 *********************************************/
-
+	char* str;
 	bool memoryOperatorCalled = false;  // '=>'
-
 
 	while (lexer->colNum < strlen(line) && tokensOk) {
 		lexer->curChar = line[lexer->colNum];
-			
-		if (lexer->curChar == ' ' && !(captureString)) {
+
+		if (lexer->curChar == ' ') {
 			++lexer->colNum;
 			continue;
-		} else if (captureString) {
-			if (lexer->curChar == '"') {
-				++quoteCount;
+		} else if (print_inst) {
+			size_t strSize = 1;
+			unsigned int strIdx = 0;
+
+			if (!(alloc)) {
+				alloc = true;
+				str = (char*)calloc(1, sizeof(char));
 			}
 
-			if (quoteCount == 2) {
-				captureString = false;
-				buffer[0] = 0x08;
-				buffer[1] = 0x08;
+			bool quoteAllowed = true;
+			unsigned short quoteCount = 0;
 
+			while (lexer->colNum < strlen(line)) {
+				lexer->curChar = line[lexer->colNum];
+
+				if (lexer->curChar == '"') {
+					if (!(quoteAllowed)) {
+						printf("TERMINATED\n");
+						print_inst = false;
+						captureString = false;
+						break;
+					}
+					
+					quoteAllowed = false;
+					++quoteCount;
+					++lexer->colNum;
+					continue;
+				}
+
+				if (quoteCount == 2) {
+					break;
+				}
+
+
+				str[strIdx] = lexer->curChar;
+				++strIdx;
+				++strSize;
+				++lexer->colNum;
+				printf("%s\n", str);
+				str = (char*)realloc(str, sizeof(char) * strSize);
+			}
+			
+			alloc = false;
+			print_inst = false;
+			captureString = false;
+			
+
+			free(str);
+		}
 		
-				char* str = (char*)malloc(sizeof(char) * (bufsize + 1));  // This will be freed from another file.
-				strcpy(str, buffer);
-				str[bufsize - 1] = '\0';
-				add_element(toklist, create_token(str, T_STR, false, true));
-			}
-		} else if (push_inst) {
-			char valueBuf[strlen(buffer) + 2];
-			unsigned int valueBufIdx = 0;
-			bool breakLoop = true;
-
-			for (int i = 0; i < strlen(buffer) && !(forbidIntCapture); ++i) {
-				if (buffer[i] == '=' && buffer[i + 1] == '>') {
-					breakLoop = false;
-					memoryOperatorCalled = true;
-				}
-			}
-
-			for (int i = 0; i < strlen(buffer) && !(breakLoop) && !(forbidIntCapture); ++i) {
-				switch (buffer[i]) {
-					case '0':
-					case '1':
-					case '2':
-					case '3':
-					case '4':
-					case '5':
-					case '6':
-					case '7':
-					case '8':
-					case '9':
-						valueBuf[valueBufIdx] = buffer[i];
-						++valueBufIdx;
-						break;
-					default:
-						submitValue = true;
-						breakLoop = true;
-						break;
-				}
-			}
-
-			if (submitValue) {
-				submitValue = false;
-				forbidIntCapture = true;
-				unsigned short val = atoi(valueBuf);
-				printf("%d\n", val);
-			}	
-		}
-
 		buffer[bufIdx] = lexer->curChar;
-		++bufsize;
 		++bufIdx;
-		++lexer->colNum;
-		buffer = (char*)realloc(buffer, sizeof(char) * bufsize);
-		printf("%s\n", buffer);
+		++bufsize;
 
-		if (strcmp(buffer, "print") == 0) {
-			captureString = true;
-			bufsize = 1;
-			bufIdx = 0;
-			buffer = (char*)realloc(buffer, sizeof(char));
-			add_element(toklist, create_token("print", T_PRINT, false, false));
-		} else if (strcmp(buffer, "push") == 0) {
+		if (lexer->curChar == ';') {
 			memset(buffer, '\0', bufsize);
-			push_inst = true;
-			bufsize = 1;
 			bufIdx = 0;
+			bufsize = 1;
 			buffer = (char*)realloc(buffer, sizeof(char));
-			add_element(toklist, create_token("push", T_PUSH, false, false));
+			++lexer->colNum;
+			continue;
+		} else if (strcmp(buffer, "print") == 0) {
+			memset(buffer, '\0', bufsize);
+			bufIdx = 0;
+			bufsize = 1;
+			buffer = (char*)realloc(buffer, sizeof(char));
+			++lexer->colNum;
+			print_inst = true;
+			captureString = true;
+			continue;
 		}
-	}
+
+		buffer = (char*)realloc(buffer, sizeof(char) * bufsize);
+
+		++lexer->colNum;
+	}	
 
 	if (push_inst && !(memoryOperatorCalled)) {
 			printf("TokenError: Expected '=>' after 'push <value>'\nLine %d\n", lexer->lineNum);
