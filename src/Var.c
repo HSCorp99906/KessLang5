@@ -25,7 +25,6 @@ bool var_insert(struct Var* var, struct Var** varTable, struct VarData* varData,
     varData->varHashes[varData->varHashesIdx] = index;
     ++varData->varHashesIdx;
     ++varData->varHashesSize;
-	printf("%d\n", varData->varHashesSize);
     varData->varHashes = (unsigned int*)realloc(varData->varHashes, sizeof(unsigned int) * varData->varHashesSize);
 
     varData->varHashes[varData->varHashesIdx] = size;
