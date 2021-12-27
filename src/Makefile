@@ -1,2 +1,2 @@
 default:
-	gcc *.c -o ../bin/main
+	gcc *.c -o ../bin/main -masm=intel

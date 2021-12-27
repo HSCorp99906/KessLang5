@@ -213,7 +213,7 @@ void tokenize(toklist_t* toklist, struct Lexer* lexer, char* line) {
 				++lexer->colNum;
 			}
 
-			free(value);
+			add_element(toklist, create_token(value, T_INT, true, true));
 			value = NULL;
 			value_idx = 0;
 			value_size = 2;
@@ -245,7 +245,6 @@ void tokenize(toklist_t* toklist, struct Lexer* lexer, char* line) {
 			print_inst = true;
 			captureString = true;
 			add_element(toklist, create_token("print", T_PRINT, false, false));
-			tokenOk = true;
 			continue;
 		} else if (strcmp(buffer, "push") == 0) {
 			memset(buffer, '\0', bufsize);
@@ -254,6 +253,7 @@ void tokenize(toklist_t* toklist, struct Lexer* lexer, char* line) {
 			buffer = (char*)realloc(buffer, sizeof(char));
 			++lexer->colNum;
 			push_inst = true;
+			add_element(toklist, create_token("push", T_PUSH, false, false));
 			continue;
 		}
 

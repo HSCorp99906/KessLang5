@@ -76,7 +76,7 @@ int main(int argc, char* argv[]) {
 
 	free(buffer);
 
-	lexer.error = true;
+	// lexer.error = true;
 
     if (lexer.error) { 
         fclose(fp);
@@ -97,6 +97,10 @@ int main(int argc, char* argv[]) {
 		 * No idea how that fixed it.
 		 */
 
+		if (parser.curIndex == 2) {
+			break;
+		}
+
 		struct AST_NODE** ast = parse(&parser, &nodelistSize);
 
 		if (ast == NULL) {
@@ -105,7 +109,6 @@ int main(int argc, char* argv[]) {
 
 		execute(ast);
 		ast_destroy(&ast, nodelistSize);
-
 	}
 
     destroy_tokenlist(&toklist);

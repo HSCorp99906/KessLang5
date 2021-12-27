@@ -1,5 +1,23 @@
 #include "../include/Token.h"
 
+bool isint(char e) {
+	switch (e) {
+		case '0':
+		case '1':
+		case '2':
+		case '3':
+		case '4':
+		case '5':
+		case '6':
+		case '7':
+		case '8':
+		case '9':
+			return true;
+		default:
+			return false;
+	}
+}
+
 
 void init_tokenlist(toklist_t* tl) {
 	tl->tokens = (struct Token*)malloc(sizeof(struct Token));
