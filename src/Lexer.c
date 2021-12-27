@@ -26,76 +26,6 @@ void tokenize(toklist_t* toklist, struct Lexer* lexer, char* line) {
 	size_t bufsize = 1;
 	char* buffer = (char*)malloc(sizeof(char));
 
-	char* lineCpy = (char*)malloc(sizeof(char) * strlen(line) + 1);
-	strcpy(lineCpy, line);
-
-	for (int i = 0; i < strlen(lineCpy); ++i) {
-		if (lineCpy[i] == '\\') {
-			lineCpy[i] = ' ';
-		}
-	}
-
-	lineCpy[strlen(lineCpy) - 2] = '\0';
-
-	bool totalTokensOk = true;
-
-	char* part = split(lineCpy, " ");
-
-	unsigned int idx = 0;
-	bool openQuote = false;
-
-	bool check = true;
-
-	// This block checks if tokens are valid.
-	while (part != NULL && check)  {
-			if (strchr(part, '"') && !(strchr(&part[strlen(part) - 2], '"'))) {
-				openQuote = true;
-			} else if (strchr(part, '"') && strchr(&part[strlen(part) - 2], '"')) {
-				free(part);
-				part = split(lineCpy, NULL);
-				continue;
-			}
-
-			switch (part[0]) {
-				case '0':
-				case '1':
-				case '2':
-				case '3':
-				case '4':
-				case '5':
-				case '6':
-				case '7':
-				case '8':
-				case '9':
-					check = false;
-					continue;
-			}
-
-			if (strcmp(part, keywords[idx]) != 0) {
-				if (idx < KEYWORD_COUNT) {
-					++idx;
-				} else {
-					idx = 0;
-					printf("%s\n", part);
-					free(part);
-					part = split(lineCpy, NULL);
-					totalTokensOk = false;
-				}
-			} else {
-				free(part);
-				part = split(lineCpy, NULL);
-			}
-	}
-
-	free(part);
-	free(lineCpy);
-	part = NULL;
-
-	if (!(totalTokensOk)) {
-		printf("TokenError: Encountered an unexpected token.\nLine %d\n", lexer->lineNum);
-		lexer->error = true;
-	}
-
 	/*********************************************
 	 *            INSTRUCTIONS 
 	 *********************************************/
@@ -118,8 +48,10 @@ void tokenize(toklist_t* toklist, struct Lexer* lexer, char* line) {
 	 *********************************************/
 	char* str;
 	bool memoryOperatorCalled = false;  // '=>'
+	bool tokenOk = true;
+	bool start = true;
 
-	while (lexer->colNum < strlen(line) && totalTokensOk) {
+	while (lexer->colNum < strlen(line) && !(lexer->error)) {
 		lexer->curChar = line[lexer->colNum];
 
 		if (lexer->curChar == ' ') {
@@ -145,6 +77,7 @@ void tokenize(toklist_t* toklist, struct Lexer* lexer, char* line) {
 				lexer->curChar = line[lexer->colNum];
 
 				if (lexer->curChar == '"') {
+					++quoteCount;
 					if (!(quoteAllowed)) {
 						print_inst = false;
 						captureString = false;
@@ -153,7 +86,6 @@ void tokenize(toklist_t* toklist, struct Lexer* lexer, char* line) {
 					}
 					
 					quoteAllowed = false;
-					++quoteCount;
 					++lexer->colNum;
 					continue;
 				}
@@ -162,12 +94,17 @@ void tokenize(toklist_t* toklist, struct Lexer* lexer, char* line) {
 					break;
 				}
 
-
 				str[strIdx] = lexer->curChar;
 				++strIdx;
 				++strSize;
 				++lexer->colNum;
 				str = (char*)realloc(str, sizeof(char) * strSize);
+			}
+
+			 if (quoteCount < 2) {
+				printf("TokenError: Invalid use of quotes.\nLine %d\n", lexer->lineNum);
+				lexer->error = true;
+				break;
 			}
 			
 			alloc = false;
@@ -196,7 +133,10 @@ void tokenize(toklist_t* toklist, struct Lexer* lexer, char* line) {
 			print_inst = true;
 			captureString = true;
 			add_element(toklist, create_token("print", T_PRINT, false, false));
+			tokenOk = true;
 			continue;
+		} else {
+			tokenOk = false;
 		}
 
 		buffer = (char*)realloc(buffer, sizeof(char) * bufsize);
