@@ -22,65 +22,38 @@ void tokenize(toklist_t* toklist, struct Lexer* lexer, char* line) {
 		"push"
 	};
 	
-	/*
-	bool captureSpace = true;
-	unsigned int spaceCount = 0;
-
-	for (int i = 0; i < strlen(line); ++i) {
-		if (line[i] == ' ' && captureSpace) {
-			captureSpace = false;
-			++spaceCount;
-		} else if (line[i] != ' ') {
-			captureSpace = true;
-		}
-	}
-
-	printf("%d\n", spaceCount);
-	*/
-	
 	unsigned long bufIdx = 0;
 	size_t bufsize = 1;
 	char* buffer = (char*)malloc(sizeof(char));
 
-	bool tokensOk = true;
-
-	char lineCpy[strlen(line) + 4];
+	char* lineCpy = (char*)malloc(sizeof(char) * strlen(line) + 1);
 	strcpy(lineCpy, line);
-	strcat(lineCpy, " EOL");
-	lineCpy[sizeof(lineCpy)] = '\0';
+
+	for (int i = 0; i < strlen(lineCpy); ++i) {
+		if (lineCpy[i] == '\\') {
+			lineCpy[i] = ' ';
+		}
+	}
+
+	lineCpy[strlen(lineCpy) - 2] = '\0';
+
+	bool totalTokensOk = true;
 
 	char* part = split(lineCpy, " ");
-	
-	/*
-	bool check = true;
-	while (check) {
-		if (part == NULL) {
-			break;
-		}
-
-		bool tokFound = false;
-
-		for (int i = 0; i < strlen(part); ++i) {
-			if (part[i] == ';') {
-				part[i + 1] = 0x08;
-				break;
-			}
-		}
-
-		unsigned int idx = 0;
-		check = false;
-	}
-	*/
 
 	unsigned int idx = 0;
+	bool openQuote = false;
 
 	bool check = true;
 
+	// This block checks if tokens are valid.
 	while (part != NULL && check)  {
-			if (strcmp(part, "EOL") == 0) {
-				break;
-			} else if (strchr(part, '"') != NULL) {
-				break;
+			if (strchr(part, '"') && !(strchr(&part[strlen(part) - 2], '"'))) {
+				openQuote = true;
+			} else if (strchr(part, '"') && strchr(&part[strlen(part) - 2], '"')) {
+				free(part);
+				part = split(lineCpy, NULL);
+				continue;
 			}
 
 			switch (part[0]) {
@@ -99,25 +72,26 @@ void tokenize(toklist_t* toklist, struct Lexer* lexer, char* line) {
 			}
 
 			if (strcmp(part, keywords[idx]) != 0) {
-				tokensOk = false;
-	
 				if (idx < KEYWORD_COUNT) {
 					++idx;
 				} else {
 					idx = 0;
+					printf("%s\n", part);
 					free(part);
 					part = split(lineCpy, NULL);
+					totalTokensOk = false;
 				}
 			} else {
-				tokensOk = true;
-				break;
+				free(part);
+				part = split(lineCpy, NULL);
 			}
 	}
 
 	free(part);
+	free(lineCpy);
 	part = NULL;
 
-	if (!(tokensOk)) {
+	if (!(totalTokensOk)) {
 		printf("TokenError: Encountered an unexpected token.\nLine %d\n", lexer->lineNum);
 		lexer->error = true;
 	}
@@ -145,11 +119,15 @@ void tokenize(toklist_t* toklist, struct Lexer* lexer, char* line) {
 	char* str;
 	bool memoryOperatorCalled = false;  // '=>'
 
-	while (lexer->colNum < strlen(line) && tokensOk) {
+	while (lexer->colNum < strlen(line) && totalTokensOk) {
 		lexer->curChar = line[lexer->colNum];
 
 		if (lexer->curChar == ' ') {
 			++lexer->colNum;
+			continue;
+		} else if (lexer->curChar == '\\') {
+			++lexer->colNum;
+			++lexer->lineNum;
 			continue;
 		} else if (print_inst) {
 			size_t strSize = 1;
@@ -168,9 +146,9 @@ void tokenize(toklist_t* toklist, struct Lexer* lexer, char* line) {
 
 				if (lexer->curChar == '"') {
 					if (!(quoteAllowed)) {
-						printf("TERMINATED\n");
 						print_inst = false;
 						captureString = false;
+						add_element(toklist, create_token(str, T_STR, false, true));
 						break;
 					}
 					
@@ -189,21 +167,18 @@ void tokenize(toklist_t* toklist, struct Lexer* lexer, char* line) {
 				++strIdx;
 				++strSize;
 				++lexer->colNum;
-				printf("%s\n", str);
 				str = (char*)realloc(str, sizeof(char) * strSize);
 			}
 			
 			alloc = false;
 			print_inst = false;
 			captureString = false;
-			
-
-			free(str);
 		}
 		
 		buffer[bufIdx] = lexer->curChar;
 		++bufIdx;
 		++bufsize;
+		// printf("%s\n", buffer);
 
 		if (lexer->curChar == ';') {
 			memset(buffer, '\0', bufsize);
@@ -220,6 +195,7 @@ void tokenize(toklist_t* toklist, struct Lexer* lexer, char* line) {
 			++lexer->colNum;
 			print_inst = true;
 			captureString = true;
+			add_element(toklist, create_token("print", T_PRINT, false, false));
 			continue;
 		}
 

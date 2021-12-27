@@ -6,9 +6,9 @@ struct AST_NODE** parse(struct Parser* parser, size_t* s) {
 	ast_init(head_node);
 	bool ignore = true;  // Ignores print statements on first run.
 
-	static int i;
+	static int i = 0;
 
-	for (i = 0; i < parser->tokenList.size; ++i) {
+	for (i; i < parser->tokenList.elements + 1; ++i) {
 		switch (parser->tokenList.tokens[i].type) {
 			case T_PRINT:
 				if (!(ignore)) {
@@ -30,11 +30,10 @@ struct AST_NODE** parse(struct Parser* parser, size_t* s) {
 				break;
 			case T_STR:
 				++parser->curIndex;
-				break;
+				break;	
 		}
 	}
 
-	ast_destroy(&head_node, *s);
 	return NULL;
 }
 

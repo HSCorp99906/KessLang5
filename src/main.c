@@ -3,6 +3,7 @@
 #include <unistd.h>
 #include <stdbool.h>
 #include <string.h>
+#include <stdint.h>
 #include "../include/Token.h"
 #include "../include/Lexer.h"
 #include "../include/Parser.h"
@@ -27,16 +28,10 @@ int main(int argc, char* argv[]) {
         return 0;
     }
 
-    size_t lineBufSize = 1;
-    char* lineBuf = (char*)malloc(sizeof(char));
-
-    size_t lbrSize = 1;
-    char* lineBufRelease = (char*)malloc(sizeof(char));
-
     FILE* fp = fopen(argv[1], "r");
 
     struct Lexer lexer = {
-        .lineNum = 0,
+        .lineNum = 1,
         .colNum = 0,
         .error = false,
     };
@@ -59,22 +54,32 @@ int main(int argc, char* argv[]) {
 
 	buffer = (char*)malloc(sizeof(char) * filesize);
 	fread(buffer, filesize, 1, fp);
+
+	uint32_t idxx = 0;
 	
 	for (int i = 0; i < strlen(buffer); ++i) {
 		if (buffer[i] == '\n') {
 			buffer[i] = ' ';
+		} else if (buffer[i] != ' ') {
+			++idxx;
 		}
+	}
+
+	// Checks if file is empty.
+	if (idxx == 0) {
+		free(buffer);
+		destroy_tokenlist(&toklist);
+		exit(0);
 	}
 	
 	tokenize(&toklist, &lexer, buffer);
 
 	free(buffer);
 
-	lexer.error = true;
+	// lexer.error = true;
 
     if (lexer.error) { 
         fclose(fp);
-		free(lineBufRelease);
         destroy_tokenlist(&toklist);
         return -1;
     }
@@ -86,19 +91,22 @@ int main(int argc, char* argv[]) {
 
 	size_t nodelistSize = 0;
 
-	for (int i = 0; i < count + 1; ++i) { 
+	while (true) { 
 		/*
 		 * Fixed segfault by subtracting element count by line count.
 		 * No idea how that fixed it.
 		 */
 
 		struct AST_NODE** ast = parse(&parser, &nodelistSize);
+
+		if (ast == NULL) {
+			break;
+		}
+
 		execute(ast);
 		ast_destroy(&ast, nodelistSize);
 
 	}
 
-    free(lineBuf);
-    free(lineBufRelease);
     destroy_tokenlist(&toklist);
 }
