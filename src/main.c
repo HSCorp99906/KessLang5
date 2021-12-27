@@ -59,7 +59,7 @@ int main(int argc, char* argv[]) {
 	
 	for (int i = 0; i < strlen(buffer); ++i) {
 		if (buffer[i] == '\n') {
-			buffer[i] = ' ';
+			buffer[i] = '\\';
 		} else if (buffer[i] != ' ') {
 			++idxx;
 		}
@@ -76,7 +76,7 @@ int main(int argc, char* argv[]) {
 
 	free(buffer);
 
-	// lexer.error = true;
+	lexer.error = true;
 
     if (lexer.error) { 
         fclose(fp);
