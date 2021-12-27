@@ -137,13 +137,41 @@ void tokenize(toklist_t* toklist, struct Lexer* lexer, char* line) {
 			captureString = false;
 		} else if (push_inst) {
 			value = (char*)calloc(2, sizeof(char));
-	
-			bool valuePassed = false;  // Is true if value has been checked.
-			bool expectMemoryOperator = true;
-			bool expectVar = false;
+			bool getVarName = false;
+			bool varNameIntAllowed = false;  // Is true when you are allowed to put int in varname.
 
 			while (lexer->colNum < strlen(line) && !(lexer->error)) {
 				lexer->curChar = line[lexer->colNum];
+
+
+				if (getVarName) {	
+					if (lexer->curChar == ';') {
+						add_element(toklist, create_token(";", T_END_STATEMENT, false, false));
+						break;
+					}
+
+					if (isint(lexer->curChar) && !(varNameIntAllowed)) {
+						printf("SyntaxError: Invalid syntax.\nLine %d\n", lexer->lineNum);
+						lexer->error = true;
+						free(value);
+						continue;
+					} else if (!(isint(lexer->curChar)) && !(isalpha(lexer->curChar))) {
+						printf("SyntaxError: Invalid syntax.\nLine %d\n", lexer->lineNum);
+						lexer->error = true;
+						free(value);
+						continue;
+					}
+
+					value[value_idx] = lexer->curChar;
+					++value_idx;
+					++lexer->colNum;
+
+					if (!(varNameIntAllowed)) {
+						varNameIntAllowed = true;
+					}
+
+					continue;
+				}
 
 				if (lexer->curChar == ' ') {
 					++lexer->colNum;
@@ -164,6 +192,7 @@ void tokenize(toklist_t* toklist, struct Lexer* lexer, char* line) {
 						if (forbidIntCapture) {
 							printf("TokenError: Unexpected token.\nLine %d\n", lexer->lineNum);
 							lexer->error = true;
+							free(value);
 							continue;
 						}
 
@@ -173,48 +202,37 @@ void tokenize(toklist_t* toklist, struct Lexer* lexer, char* line) {
 						value = (char*)realloc(value, sizeof(char) * value_size);
 						break;
 					case '=':
-						if (!(expectMemoryOperator)) {
-							printf("TokenError: Unexpected token.\nLine %d\n", lexer->lineNum);
-							lexer->error = true;
-							continue;
-						} else {
-							expectMemoryOperator = false;
-							if (line[++lexer->colNum] == '>') {
-								memoryOperatorCalled = true;
-							}
+						add_element(toklist, create_token(value, T_INT, true, true));
+
+						if (line[lexer->colNum + 1] == '>') {
+							add_element(toklist, create_token("=>", T_ARROW, false, false));
 						}
-
-						expectVar = true;
+	
 						forbidIntCapture = true;
-
 						break;
 					case '$':
-						if (!(expectVar)) {
-							if (!(memoryOperatorCalled)) {
-								printf("SyntaxError: Expected '=>' after 'push <value>'\nLine %d\n", lexer->lineNum);
-								lexer->error = true;
-								continue;
-							}
-
-							printf("TokenError: Unexpected token.\nLine %d\n", lexer->lineNum);
-							lexer->error = true;
-							continue;
+						if (!(getVarName)) {
+							memset(value, '\0', value_size);
+							value_size = 2;
+							value_idx = 0;
+							value = (char*)realloc(value, sizeof(char) * value_size);
+							getVarName = true;
 						}
-						break;	
+						break;
 					default:
 						if (!(forbidIntCapture)) {
 							printf("TokenError: Unexpected value for 'push' instruction.\nLine %d\n", lexer->lineNum);
 							lexer->error = true;
+							free(value);
 						}
 
 						break;
-				}
+				}	
 
 				++lexer->colNum;
 			}
-
-			add_element(toklist, create_token(value, T_INT, true, true));
-			value = NULL;
+	
+			add_element(toklist, create_token(value, T_VAR, true, true));
 			value_idx = 0;
 			value_size = 2;
 			push_inst = false;

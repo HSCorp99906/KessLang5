@@ -16,6 +16,7 @@ typedef enum TokenType {
 	T_EOL,
 	T_PUSH,
 	T_VAR,
+	T_ARROW,
 } toktype_t;
 
 typedef struct Token {

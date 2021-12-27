@@ -97,7 +97,7 @@ int main(int argc, char* argv[]) {
 		 * No idea how that fixed it.
 		 */
 
-		if (parser.curIndex == 2) {
+		if (parser.curIndex == toklist.elements) {
 			break;
 		}
 

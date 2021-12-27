@@ -1,1 +1,2 @@
-push 12 => $esp;
+print "Pushing 12 to stack..";
+push 12 => $null;
