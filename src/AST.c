@@ -63,7 +63,7 @@ struct AST_NODE* ast_locate(struct AST_NODE** node, char key[]) {
 }
 
 
-void ast_destroy(struct AST_NODE*** nodes, int s) {
+void ast_destroy(struct AST_NODE*** nodes) {
 	free(ast_locate(*nodes, "type")->child);
 	free(ast_locate(*nodes, "type"));
 

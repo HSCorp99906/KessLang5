@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include <unistd.h>
 #include <stdbool.h>
+#include <signal.h>
 #include <string.h>
 #include <stdint.h>
 #include "../include/Token.h"
@@ -15,6 +16,21 @@
  * and not making a token of that line.
  * Either make a token for that line or reject it.
  */
+
+
+size_t astBufSize;
+struct AST_NODE*** astBuffer;
+toklist_t toklist;
+
+
+void kill_process(int sigint) {
+	for (int i = 0; i < astBufSize - 1; ++i) {
+		ast_destroy(&astBuffer[i]);
+	}
+
+	destroy_tokenlist(&toklist);
+	exit(0);
+}
 
 
 int main(int argc, char* argv[]) {
@@ -35,8 +51,6 @@ int main(int argc, char* argv[]) {
         .colNum = 0,
         .error = false,
     };
-
-    toklist_t toklist;
 
     init_tokenlist(&toklist);
 
@@ -91,6 +105,10 @@ int main(int argc, char* argv[]) {
 
 	size_t nodelistSize = 0;
 
+	astBufSize = 1;
+	uint32_t astBufIdx = 0;
+	astBuffer = (struct AST_NODE***)malloc(sizeof(struct AST_NODE**));
+
 	while (true) { 
 		/*
 		 * Fixed segfault by subtracting element count by line count.
@@ -104,12 +122,27 @@ int main(int argc, char* argv[]) {
 		struct AST_NODE** ast = parse(&parser, &nodelistSize);
 
 		if (ast == NULL) {
+			for (int i = 0; i < astBufSize; ++i) {
+				ast_destroy(&astBuffer[i]);
+			}
+
+			destroy_tokenlist(&toklist);
+			exit(1);
+
 			break;
 		}
 
-		execute(ast);
-		ast_destroy(&ast, nodelistSize);
+		astBuffer[astBufIdx] = ast;
+		++astBufIdx;
+		++astBufSize;
+		astBuffer = (struct AST_NODE***)realloc(astBuffer, sizeof(struct AST_NODE**) * astBufSize);
 	}
 
-    destroy_tokenlist(&toklist);
+	signal(SIGINT, kill_process);
+	for (int i = 0; i < astBufSize - 1; ++i) {
+		execute(astBuffer[i]);
+	}
+
+	kill_process(0);
+	
 }

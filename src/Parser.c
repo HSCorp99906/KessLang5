@@ -41,8 +41,9 @@ struct AST_NODE** parse(struct Parser* parser, size_t* s) {
 
 					int lastIdx = parser->curIndex;
 					bool arrowFound = false;
+					bool varFound = false;
 
-					while (parser->curIndex < parser->tokenList.elements - 2) {
+					while (parser->curIndex < parser->tokenList.elements - 1) {
 						++parser->curIndex;
 
 						if (parse_peek(*parser, parser->curIndex).type == T_ARROW) {
@@ -53,11 +54,23 @@ struct AST_NODE** parse(struct Parser* parser, size_t* s) {
 							}
 
 							arrowFound = true;
+						} else if (parse_peek(*parser, parser->curIndex).type == T_VAR) {
+							if (varFound) {
+								free(head_node);
+								printf("SyntaxError: Unexpected token.\n");
+								return NULL;
+							}
+
+							varFound = true;
 						}
 					}
 
 					if (!(arrowFound)) {
 						printf("SyntaxError: Expected '=>'.\n");
+						free(head_node);
+						return NULL;
+					} else if (!(varFound)) {
+						printf("SyntaxError: Expected variable declaration after '=>'\n");
 						free(head_node);
 						return NULL;
 					}
@@ -70,13 +83,16 @@ struct AST_NODE** parse(struct Parser* parser, size_t* s) {
 					
 					init_node(push_node, "type", "push-instruction", 0, false); 
 
-					push_node->child = (struct AST_NODE*)malloc(sizeof(struct AST_NODE));		
+					push_node->child = (struct AST_NODE*)malloc(sizeof(struct AST_NODE));
 
 					if (isint(tokValue[0])) {	
 						init_node(push_node->child, "arg", NULL, atoi(tokValue), true); 
 					} else {
 						init_node(push_node->child, "arg", tokValue, 0, false);
 					}
+
+					push_node->child->child = (struct AST_NODE*)malloc(sizeof(struct AST_NODE));
+					init_node(push_node->child->child, "var-arg", parse_peek(*parser, parser->curIndex + 4).tok, 0, false); 
 
 					ast_insert(head_node, push_node, s);
 

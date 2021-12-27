@@ -21,7 +21,9 @@ void execute(struct AST_NODE** ast) {
 			printf("%d pushed to stack.\n", pushVal);
 			register int* curStkPtrAddr asm("esp");
 			printf("Current address at stack pointer => %p\n", curStkPtrAddr);
-			__asm__("pop rax");  // Pops value off stack (for now).
+			__asm__("pop rax");  // Pops value off stack (for now).	
 		}
+
+		free(node->child->child);
 	}
 }
