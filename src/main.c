@@ -22,11 +22,25 @@ size_t astBufSize;
 struct AST_NODE*** astBuffer;
 toklist_t toklist;
 
+struct VarData vdata;
+size_t varTableSize;
+struct Var** varTable;
+
 
 void kill_process(int sigint) {
 	for (int i = 0; i < astBufSize - 1; ++i) {
 		ast_destroy(&astBuffer[i]);
 	}
+
+	free(vdata.varHashes);
+	vdata.varHashes = NULL; 
+	
+	for (int i = 0; i < varTableSize; ++i) {
+		free(varTable[i]);
+	}
+
+	free(varTable);
+	varTable = NULL;
 
 	destroy_tokenlist(&toklist);
 	exit(0);
@@ -109,6 +123,17 @@ int main(int argc, char* argv[]) {
 	uint32_t astBufIdx = 0;
 	astBuffer = (struct AST_NODE***)malloc(sizeof(struct AST_NODE**));
 
+	vdata.varHashes = (unsigned int*)malloc(sizeof(unsigned int*));
+	vdata.varHashesSize = 1;
+	vdata.varHashesIdx = 0;
+	vdata.init = false;
+
+	varTable = (struct Var**)malloc(sizeof(struct Var*));
+	varTableSize = 1;
+	var_init(varTable, varTableSize);
+
+	signal(SIGINT, kill_process);
+
 	while (true) { 
 		/*
 		 * Fixed segfault by subtracting element count by line count.
@@ -122,7 +147,7 @@ int main(int argc, char* argv[]) {
 		struct AST_NODE** ast = parse(&parser, &nodelistSize);
 
 		if (ast == NULL) {
-			for (int i = 0; i < astBufSize; ++i) {
+			for (int i = 0; i < astBufSize - 1; ++i) {
 				ast_destroy(&astBuffer[i]);
 			}
 
@@ -138,7 +163,6 @@ int main(int argc, char* argv[]) {
 		astBuffer = (struct AST_NODE***)realloc(astBuffer, sizeof(struct AST_NODE**) * astBufSize);
 	}
 
-	signal(SIGINT, kill_process);
 	for (int i = 0; i < astBufSize - 1; ++i) {
 		execute(astBuffer[i]);
 	}

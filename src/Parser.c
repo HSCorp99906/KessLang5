@@ -1,5 +1,9 @@
 #include "../include/Parser.h"
 
+extern struct VarData vdata;
+extern struct Var** varTable;
+extern size_t varTableSize;
+
 
 struct AST_NODE** parse(struct Parser* parser, size_t* s) {
 	struct AST_NODE** head_node = get_tree();
@@ -9,25 +13,58 @@ struct AST_NODE** parse(struct Parser* parser, size_t* s) {
 
 	static int i = 0;
 
-	for (i; i < parser->tokenList.elements; ++i) {
+	while (parser->curIndex < parser->tokenList.elements) {
 		switch (parse_peek(*parser, parser->curIndex).type) {
 			case T_PRINT:
-				if (!(ignore)) {
+				{
 					// printf("%s\n", parse_peek(*parser, parser->curIndex).tok);
-					
+
 					++parser->curIndex;
+
+					char* str = parse_peek(*parser, parser->curIndex).tok;
+					
+					char varName[strlen(str)];
+					unsigned long varNameIdx = 0;
+					bool isVar = str[0] == '$' ? true : false;
+					char* isVarStr = (char*)calloc(6, sizeof(char));
+					strcpy(isVarStr, "false");
+
+					// TODO: ALLOW MULTIPLE VARIABLES.
+					
+					if (str[0] == '$') {
+						strcpy(isVarStr, "true");
+						for (int i = 1; i < strlen(str); ++i) {
+							varName[varNameIdx] = str[i];
+							++varNameIdx;
+						}
+					}
+
+					if (isVar) {
+						if (var_locate(varTable, vdata, varName, varTableSize) == NULL) {
+							free(head_node);
+							free(isVarStr);
+							printf("SymbolError: '%s' is undefined.\n", varName);
+							return NULL;
+						}
+					}
+
 					struct AST_NODE* print_node = (struct AST_NODE*)malloc(sizeof(struct AST_NODE));
 					init_node(print_node, "type", "print-statement", 0, false);
 					ast_insert(head_node, print_node, s);
 					print_node->child = (struct AST_NODE*)malloc(sizeof(struct AST_NODE));
-					init_node(print_node->child, "arg", parse_peek(*parser, parser->curIndex).tok, 0, false);
-					// free(print_node->child);
+
+					if (!(isVar)) {
+						init_node(print_node->child, "arg", parse_peek(*parser, parser->curIndex).tok, 0, false);
+					} else {
+						init_node(print_node->child, "arg", varName, 0, false);
+					}
+
+					print_node->child->child = (struct AST_NODE*)malloc(sizeof(struct AST_NODE));
+					init_node(print_node->child->child, "is-var", isVarStr, 0, false);
 
 					++parser->curIndex;
 					return head_node;
 					
-				} else {
-					ignore = false;
 				}
 				break;
 			case T_STR:
@@ -42,8 +79,13 @@ struct AST_NODE** parse(struct Parser* parser, size_t* s) {
 					int lastIdx = parser->curIndex;
 					bool arrowFound = false;
 					bool varFound = false;
+					bool run = true;
 
-					while (parser->curIndex < parser->tokenList.elements - 1) {
+					while (parser->curIndex < parser->tokenList.elements && run) {
+						if (parse_peek(*parser, parser->curIndex).type == T_END_STATEMENT) {
+							run = false;
+						}
+
 						++parser->curIndex;
 
 						if (parse_peek(*parser, parser->curIndex).type == T_ARROW) {
@@ -63,6 +105,10 @@ struct AST_NODE** parse(struct Parser* parser, size_t* s) {
 
 							varFound = true;
 						}
+
+						if (!(run)) {
+							parser->curIndex += 2;
+						}
 					}
 
 					if (!(arrowFound)) {
@@ -78,10 +124,8 @@ struct AST_NODE** parse(struct Parser* parser, size_t* s) {
 					struct AST_NODE* push_node = (struct AST_NODE*)malloc(sizeof(struct AST_NODE));
 					
 					char* tokValue = parse_peek(*parser, lastIdx + 1).tok;
-
-					// TODO: Move most implementation from lexer for this section to here.
 					
-					init_node(push_node, "type", "push-instruction", 0, false); 
+					init_node(push_node, "type", "push-instruction", 0, false);
 
 					push_node->child = (struct AST_NODE*)malloc(sizeof(struct AST_NODE));
 
@@ -92,12 +136,15 @@ struct AST_NODE** parse(struct Parser* parser, size_t* s) {
 					}
 
 					push_node->child->child = (struct AST_NODE*)malloc(sizeof(struct AST_NODE));
-					init_node(push_node->child->child, "var-arg", parse_peek(*parser, parser->curIndex + 4).tok, 0, false); 
+					init_node(push_node->child->child, "var-arg", parse_peek(*parser, parser->curIndex - 2).tok, 0, false);
+
+					struct Var* newVar = (struct Var*)malloc(sizeof(struct Var));
+					newVar->key = parse_peek(*parser, parser->curIndex - 2).tok;
+					newVar->value = NULL;
+					newVar->datatype = INT_PTR;
+					var_insert(newVar, varTable, &vdata, varTableSize);
 
 					ast_insert(head_node, push_node, s);
-
-					++parser->curIndex;
-					
 					return head_node;
 				}
 		}

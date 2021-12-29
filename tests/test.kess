@@ -1,1 +1,2 @@
-push 12 => $null;
+push 1 => $p;
+print $test;

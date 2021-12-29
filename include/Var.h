@@ -5,11 +5,11 @@
 #include <stdbool.h>
 #include <string.h>
 
-#define START_SIZE 10000
-
-
 typedef enum DataType {
 	INT,
+	INT_PTR,
+	INT_PTRPTR,
+	INT_PTRPTRPTR,
 } datatype_t;
 
 
@@ -24,6 +24,7 @@ struct VarData {
 	unsigned int* varHashes;
 	size_t varHashesSize;
 	unsigned int varHashesIdx;
+	bool init;
 };
 
 

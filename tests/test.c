@@ -10,15 +10,18 @@ int main() {
 	};
 
 	size_t varSize = 1;
-	struct Var** varTable = (struct Var**)malloc(sizeof(struct varTable*));
+	struct Var** varTable = (struct Var**)malloc(sizeof(struct Var*));
 	var_init(varTable, varSize);
 
-	struct Var* testVar = (struct Var*)malloc(sizeof(struct Var*));
+	struct Var* testVar = (struct Var*)malloc(sizeof(struct Var));
 	testVar->key = "somingV2ar";
+	testVar->value = "AAA";
 	var_insert(testVar, varTable, &vdata, varSize);
 
-	if (var_locate(varTable, vdata, "somingV2ar", varSize) == NULL) {
+	struct Var* v = var_locate(varTable, vdata, "somingV2ar", varSize);
 
+	if (v != NULL) {
+		printf("%s\n", v->value);
 	}
 
 	var_destroy(varTable, &vdata);

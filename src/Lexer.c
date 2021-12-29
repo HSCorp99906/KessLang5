@@ -96,7 +96,7 @@ void tokenize(toklist_t* toklist, struct Lexer* lexer, char* line) {
 			unsigned short quoteCount = 0;
 
 			while (lexer->colNum < strlen(line)) {
-				lexer->curChar = line[lexer->colNum];	
+				lexer->curChar = line[lexer->colNum];
 				if (lexer->curChar == '"') {
 					++quoteCount;
 					if (!(quoteAllowed)) {
@@ -113,6 +113,8 @@ void tokenize(toklist_t* toklist, struct Lexer* lexer, char* line) {
 
 				if (quoteCount == 2) {
 					break;
+				} else if (lexer->curChar == ';') {
+					break;
 				}
 
 				str[strIdx] = lexer->curChar;
@@ -123,13 +125,27 @@ void tokenize(toklist_t* toklist, struct Lexer* lexer, char* line) {
 			}
 
 			 if (quoteCount < 2 && quoteCount != 0) {
+				free(str);
 				printf("TokenError: Invalid use of quotes.\nLine %d\n", lexer->lineNum);
 				lexer->error = true;
 				break;
 			} else if (quoteCount == 0) {
-				printf("TokenError: Missing quotes.\nLine %d\n", lexer->lineNum);
-				lexer->error = true;
-				break;
+				bool raiseError = false;
+
+				for (int j = 0; j < strlen(str); ++j) {
+					if (str[j] == ' ' && str[j + 1] != ' ') {
+						raiseError = true;
+					}
+				}
+
+				if (raiseError) {
+					free(str);
+					printf("TokenError: Missing quotes.\nLine %d\n", lexer->lineNum);
+					lexer->error = true;
+					break;
+				} else {
+					add_element(toklist, create_token(str, T_VAR, false, true));
+				}
 			}
 			
 			alloc = false;
@@ -155,7 +171,7 @@ void tokenize(toklist_t* toklist, struct Lexer* lexer, char* line) {
 						lexer->error = true;
 						free(value);
 						continue;
-					} else if (!(isint(lexer->curChar)) && !(isalpha(lexer->curChar))) {
+					} else if (!(isint(lexer->curChar)) && !(isalpha(lexer->curChar)) && lexer->curChar != '_') {
 						printf("SyntaxError: Invalid syntax.\nLine %d\n", lexer->lineNum);
 						lexer->error = true;
 						free(value);
@@ -236,6 +252,7 @@ void tokenize(toklist_t* toklist, struct Lexer* lexer, char* line) {
 			value_idx = 0;
 			value_size = 2;
 			push_inst = false;
+			add_element(toklist, create_token(";", T_END_STATEMENT, false, false));
 
 			if (lexer->error) {
 				break;
@@ -245,7 +262,6 @@ void tokenize(toklist_t* toklist, struct Lexer* lexer, char* line) {
 		buffer[bufIdx] = lexer->curChar;
 		++bufIdx;
 		++bufsize;
-		// printf("%s\n", buffer);
 
 		if (lexer->curChar == ';') {
 			memset(buffer, '\0', bufsize);

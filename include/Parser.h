@@ -6,9 +6,10 @@
 #include <stdlib.h>
 #include <string.h>
 #include "Token.h"
+#include "Var.h"
 #include "AST.h"
 
-#define MAX_BUFFER_SIZE 120
+#undef START_SIZE
 
 
 struct Parser {
