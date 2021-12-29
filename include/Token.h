@@ -9,7 +9,6 @@
 
 typedef enum TokenType {
 	T_PRINT,
-	T_VAR_DEC,
 	T_INT,
 	T_STR,
 	T_END_STATEMENT,
@@ -17,6 +16,11 @@ typedef enum TokenType {
 	T_PUSH,
 	T_VAR,
 	T_ARROW,
+	T_IF_STATEMENT,
+	T_DO,
+	T_TRUE,
+	T_FALSE,
+	T_END,
 } toktype_t;
 
 typedef struct Token {

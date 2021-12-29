@@ -1,4 +1,3 @@
-print "Pushing 12 to stack..";
-push 12 => $stckPtr;
-print "Address below:";
-print $stckPtr;
+if true do
+	print "hi";
+end;

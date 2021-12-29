@@ -17,6 +17,7 @@ struct Parser {
 	tok_t currentToken;
 	uint32_t lineNum;
 	size_t curIndex;
+	bool error;
 };
 
 

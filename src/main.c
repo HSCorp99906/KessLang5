@@ -110,6 +110,7 @@ int main(int argc, char* argv[]) {
 	struct Parser parser = {
 		.tokenList = toklist,
 		.curIndex = 0,
+		.error = false
 	};
 
 	size_t nodelistSize = 0;
@@ -128,13 +129,13 @@ int main(int argc, char* argv[]) {
 		 * No idea how that fixed it.
 		 */
 
-		if (parser.curIndex == toklist.elements) {
+		if (parser.curIndex == toklist.elements - 1) {
 			break;
 		}
 
 		struct AST_NODE** ast = parse(&parser, &nodelistSize);
 
-		if (ast == NULL) {
+		if (ast == NULL && parser.error) {
 			for (int i = 0; i < astBufSize - 1; ++i) {
 				ast_destroy(&astBuffer[i]);
 			}
@@ -142,6 +143,8 @@ int main(int argc, char* argv[]) {
 			destroy_tokenlist(&toklist);
 			exit(1);
 
+			break;
+		} else if (ast == NULL) {
 			break;
 		}
 

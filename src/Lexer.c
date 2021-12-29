@@ -42,6 +42,7 @@ void tokenize(toklist_t* toklist, struct Lexer* lexer, char* line) {
 	bool forbidIntCapture = false;
 	bool captureString = false;
 	bool alloc = false;
+	bool ignoreMissingSemicolon = false;
 
 	/*********************************************
 	 *              VALUES 
@@ -59,7 +60,7 @@ void tokenize(toklist_t* toklist, struct Lexer* lexer, char* line) {
 	while (lexer->colNum < strlen(line) && !(lexer->error)) {
 		lexer->curChar = line[lexer->colNum];
 
-		if (lexer->curChar == ' ') {
+		if (lexer->curChar == ' ' || lexer->curChar == '\t') {
 			++lexer->colNum;
 			continue;
 		} else if (lexer->curChar == '\\') {
@@ -67,9 +68,11 @@ void tokenize(toklist_t* toklist, struct Lexer* lexer, char* line) {
 				if (line[i] == ' ') {
 					continue;
 				} else if (line[i] != ' ') {
-					if (line[i] != ';') {
+					if (line[i] != ';' && !(ignoreMissingSemicolon)) {
 						printf("SyntaxError: Expected semicolon.\nLine %d\n", lexer->lineNum);
 						lexer->error = true;
+					} else if (ignoreMissingSemicolon) {
+						ignoreMissingSemicolon = false;
 					}
 
 					break;
@@ -288,6 +291,47 @@ void tokenize(toklist_t* toklist, struct Lexer* lexer, char* line) {
 			++lexer->colNum;
 			push_inst = true;
 			add_element(toklist, create_token("push", T_PUSH, false, false));
+			continue;
+		} else if (strcmp(buffer, "if") == 0) {
+			memset(buffer, '\0', bufsize);
+			bufIdx = 0;
+			bufsize = 1;
+			buffer = (char*)realloc(buffer, sizeof(char));
+			++lexer->colNum;
+			add_element(toklist, create_token("if", T_IF_STATEMENT, false, false));
+			continue;
+		} else if (strcmp(buffer, "do") == 0) {
+			memset(buffer, '\0', bufsize);
+			bufIdx = 0;
+			bufsize = 1;
+			buffer = (char*)realloc(buffer, sizeof(char));
+			++lexer->colNum;
+			add_element(toklist, create_token("do", T_DO, false, false));
+			ignoreMissingSemicolon = true;
+			continue;
+		} else if (strcmp(buffer, "true") == 0) {
+			memset(buffer, '\0', bufsize);
+			bufIdx = 0;
+			bufsize = 1;
+			buffer = (char*)realloc(buffer, sizeof(char));
+			++lexer->colNum;
+			add_element(toklist, create_token("true", T_TRUE, false, false));
+			continue;
+		} else if (strcmp(buffer, "false") == 0) {
+			memset(buffer, '\0', bufsize);
+			bufIdx = 0;
+			bufsize = 1;
+			buffer = (char*)realloc(buffer, sizeof(char));
+			++lexer->colNum;
+			add_element(toklist, create_token("false", T_FALSE, false, false));
+			continue;
+		} else if (strcmp(buffer, "end") == 0) { 
+			memset(buffer, '\0', bufsize);
+			bufIdx = 0;
+			bufsize = 1;
+			buffer = (char*)realloc(buffer, sizeof(char));
+			++lexer->colNum;
+			add_element(toklist, create_token("end", T_END, false, false));
 			continue;
 		}
 
