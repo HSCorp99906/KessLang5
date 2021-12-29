@@ -1,37 +1,33 @@
 #ifndef VAR_H
 #define VAR_H
 
-#include <stdlib.h>
 #include <stdbool.h>
 #include <string.h>
+#include <stdlib.h>
+
 
 typedef enum DataType {
 	INT,
 	INT_PTR,
-	INT_PTRPTR,
-	INT_PTRPTRPTR,
 } datatype_t;
 
 
 struct Var {
 	datatype_t datatype;
-	void* value;
 	char* key;
+	void* value;
 };
 
 
-struct VarData {
-	unsigned int* varHashes;
-	size_t varHashesSize;
-	unsigned int varHashesIdx;
-	bool init;
-};
+struct VarTable {
+	struct Var** vars;
+	size_t size;
+	unsigned long varIdx;
+}; 
 
 
-unsigned int var_hash(const char* key, size_t size);
-void var_init(struct Var** var, size_t size);
-bool var_insert(struct Var* var, struct Var** varTable, struct VarData* varData, size_t size);
-struct Var* var_locate(struct Var** varTable, struct VarData vdata, const char* key, size_t size);
-void var_destroy(struct Var** varTable, struct VarData* vdata); 
+void var_insert(struct VarTable* varTable, struct Var* var);
+void initVarTable(struct VarTable* varTable);
+struct Var* varLocate(struct VarTable varTable, const char* const KEY);
 
 #endif

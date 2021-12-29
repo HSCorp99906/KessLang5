@@ -22,9 +22,7 @@ size_t astBufSize;
 struct AST_NODE*** astBuffer;
 toklist_t toklist;
 
-struct VarData vdata;
-size_t varTableSize;
-struct Var** varTable;
+struct VarTable varTable;
 
 
 void kill_process(int sigint) {
@@ -32,15 +30,12 @@ void kill_process(int sigint) {
 		ast_destroy(&astBuffer[i]);
 	}
 
-	free(vdata.varHashes);
-	vdata.varHashes = NULL; 
-	
-	for (int i = 0; i < varTableSize; ++i) {
-		free(varTable[i]);
+	for (int i = 0; i < varTable.size - 1; ++i) {
+		free(varTable.vars[i]);
 	}
 
-	free(varTable);
-	varTable = NULL;
+	free(varTable.vars);
+	varTable.vars = NULL;
 
 	destroy_tokenlist(&toklist);
 	exit(0);
@@ -123,14 +118,7 @@ int main(int argc, char* argv[]) {
 	uint32_t astBufIdx = 0;
 	astBuffer = (struct AST_NODE***)malloc(sizeof(struct AST_NODE**));
 
-	vdata.varHashes = (unsigned int*)malloc(sizeof(unsigned int*));
-	vdata.varHashesSize = 1;
-	vdata.varHashesIdx = 0;
-	vdata.init = false;
-
-	varTable = (struct Var**)malloc(sizeof(struct Var*));
-	varTableSize = 1;
-	var_init(varTable, varTableSize);
+	initVarTable(&varTable);
 
 	signal(SIGINT, kill_process);
 

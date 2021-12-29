@@ -1,9 +1,7 @@
 #include "../include/Runtime.h"
 
 
-extern struct VarData vdata;
-extern struct Var** varTable;
-extern size_t varTableSize;
+extern struct VarTable varTable;
 
 
 void execute(struct AST_NODE** ast) {
@@ -21,19 +19,25 @@ void execute(struct AST_NODE** ast) {
 		if (strcmp(node->child->child->value, "true") != 0) {  // Is var str boolean.
 			printf("%s\n", node->child->value);
 		} else {
-			struct Var* printVar = var_locate(varTable, vdata, node->child->value, varTableSize);
-			
-			switch (printVar->datatype) {
-				case INT_PTR:
-					{
-						int* addr = (int*)printVar->value;
-						printf("%p\n", addr);
-					}
 
-					break;
+			struct Var* printVar = varLocate(varTable, node->child->value);
+
+			if (!(printVar)) {
+				printf("FATAL: Please report this issue on our GitHub.", node->child->value);
+			} else {
+				switch (printVar->datatype) {
+					case INT_PTR:
+						{
+							int* addr = (int*)printVar->value;
+							printf("%p\n", addr);
+						}
+						break;
+				}
 			}
-		}
 
+			free(node->child->value);
+		}
+		
 		free(node->child->child->value);
 		free(node->child->child);
 		node->child->child = NULL;
@@ -42,11 +46,12 @@ void execute(struct AST_NODE** ast) {
 			register int pushVal asm("rax") = node->child->valueINT;
 			__asm__("push rax");
 			register int* curStkPtrAddr asm("esp");
-			__asm__("pop rax");  // Pops value off stack (for now).
+			__asm__("pop rax");  // Pops value off stack (for now).	
 
-			struct Var* newVar = var_locate(varTable, vdata, node->child->child->value, varTableSize);
-			newVar->value = curStkPtrAddr;
-	
+			struct Var* var = varLocate(varTable, node->child->child->value);
+			var->value = curStkPtrAddr;
+			var->datatype = INT_PTR;
+
 			free(node->child->child);
 			node->child->child = NULL;
 		}

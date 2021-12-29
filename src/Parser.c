@@ -1,8 +1,6 @@
 #include "../include/Parser.h"
 
-extern struct VarData vdata;
-extern struct Var** varTable;
-extern size_t varTableSize;
+extern struct VarTable varTable;
 
 
 struct AST_NODE** parse(struct Parser* parser, size_t* s) {
@@ -23,7 +21,7 @@ struct AST_NODE** parse(struct Parser* parser, size_t* s) {
 
 					char* str = parse_peek(*parser, parser->curIndex).tok;
 					
-					char varName[strlen(str)];
+					char* varName = (char*)calloc(strlen(str) + 2, sizeof(char));
 					unsigned long varNameIdx = 0;
 					bool isVar = str[0] == '$' ? true : false;
 					char* isVarStr = (char*)calloc(6, sizeof(char));
@@ -40,10 +38,10 @@ struct AST_NODE** parse(struct Parser* parser, size_t* s) {
 					}
 
 					if (isVar) {
-						if (var_locate(varTable, vdata, varName, varTableSize) == NULL) {
-							free(head_node);
-							free(isVarStr);
+						if (!(varLocate(varTable, varName))) {
 							printf("SymbolError: '%s' is undefined.\n", varName);
+							free(isVarStr);
+							free(head_node);
 							return NULL;
 						}
 					}
@@ -63,6 +61,7 @@ struct AST_NODE** parse(struct Parser* parser, size_t* s) {
 					init_node(print_node->child->child, "is-var", isVarStr, 0, false);
 
 					++parser->curIndex;
+
 					return head_node;
 					
 				}
@@ -135,14 +134,13 @@ struct AST_NODE** parse(struct Parser* parser, size_t* s) {
 						init_node(push_node->child, "arg", tokValue, 0, false);
 					}
 
-					push_node->child->child = (struct AST_NODE*)malloc(sizeof(struct AST_NODE));
-					init_node(push_node->child->child, "var-arg", parse_peek(*parser, parser->curIndex - 2).tok, 0, false);
-
 					struct Var* newVar = (struct Var*)malloc(sizeof(struct Var));
 					newVar->key = parse_peek(*parser, parser->curIndex - 2).tok;
 					newVar->value = NULL;
-					newVar->datatype = INT_PTR;
-					var_insert(newVar, varTable, &vdata, varTableSize);
+					var_insert(&varTable, newVar);
+
+					push_node->child->child = (struct AST_NODE*)malloc(sizeof(struct AST_NODE));
+					init_node(push_node->child->child, "var-arg", parse_peek(*parser, parser->curIndex - 2).tok, 0, false);	
 
 					ast_insert(head_node, push_node, s);
 					return head_node;

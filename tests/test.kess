@@ -1,2 +1,4 @@
-push 1 => $p;
-print $test;
+print "Pushing 12 to stack..";
+push 12 => $stckPtr;
+print "Address below:";
+print $stckPtr;

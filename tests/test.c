@@ -3,27 +3,19 @@
 
 
 int main() {
-	struct VarData vdata = {
-		.varHashes = (unsigned int*)malloc(sizeof(unsigned int*)),
-		.varHashesSize = 1,
-		.varHashesIdx = 0,
+	int val = 2;
+
+	struct Var var1 = {
+		.key = "var1",
+		.value = &val,
 	};
 
-	size_t varSize = 1;
-	struct Var** varTable = (struct Var**)malloc(sizeof(struct Var*));
-	var_init(varTable, varSize);
+	struct VarTable varTable;
+	initVarTable(&varTable);
 
-	struct Var* testVar = (struct Var*)malloc(sizeof(struct Var));
-	testVar->key = "somingV2ar";
-	testVar->value = "AAA";
-	var_insert(testVar, varTable, &vdata, varSize);
+	var_insert(&varTable, var1);
 
-	struct Var* v = var_locate(varTable, vdata, "somingV2ar", varSize);
+	printf("%s\n", varLocate(varTable, "var1")->key);
 
-	if (v != NULL) {
-		printf("%s\n", v->value);
-	}
-
-	var_destroy(varTable, &vdata);
-	varTable = NULL;
+	free(varTable.vars);
 }
