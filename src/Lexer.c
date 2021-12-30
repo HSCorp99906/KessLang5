@@ -43,6 +43,7 @@ void tokenize(toklist_t* toklist, struct Lexer* lexer, char* line) {
 	bool captureString = false;
 	bool alloc = false;
 	bool ignoreMissingSemicolon = false;
+	bool captureVar = false;
 
 	/*********************************************
 	 *              VALUES 
@@ -265,6 +266,14 @@ void tokenize(toklist_t* toklist, struct Lexer* lexer, char* line) {
 		buffer[bufIdx] = lexer->curChar;
 		++bufIdx;
 		++bufsize;
+
+		if (lexer->curChar == '$' && line[lexer->colNum + 1] == ' ') {
+			printf("SyntaxError: Invalid Syntax.\nLine %d\n", lexer->lineNum);
+		} else if (lexer->curChar == '$') {
+			captureVar = true;
+			++lexer->colNum;
+			continue;
+		}
 
 		if (lexer->curChar == ';') {
 			memset(buffer, '\0', bufsize);

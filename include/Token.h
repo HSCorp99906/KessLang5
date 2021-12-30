@@ -21,6 +21,7 @@ typedef enum TokenType {
 	T_TRUE,
 	T_FALSE,
 	T_END,
+	T_EQUALS,
 } toktype_t;
 
 typedef struct Token {

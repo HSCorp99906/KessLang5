@@ -11,7 +11,6 @@ struct AST_NODE** parse(struct Parser* parser, size_t* s) {
 
 	while (parser->curIndex < parser->tokenList.elements - 1) {
 		if (ignoreAll) {
-			
 			if (parse_peek(*parser, parser->curIndex).type != T_END) {
 				++parser->curIndex;
 				continue;
@@ -87,11 +86,12 @@ struct AST_NODE** parse(struct Parser* parser, size_t* s) {
 					
 				}
 			case T_IF_STATEMENT:
-
 				bool evaluatedCondition = false;
 				bool booleanCondition = false;
 
 				++parser->curIndex;
+
+				unsigned long curIdxCpy = parser->curIndex;
 
 				const char* possibleBoolean = parse_peek(*parser, parser->curIndex).tok;
 
@@ -104,6 +104,24 @@ struct AST_NODE** parse(struct Parser* parser, size_t* s) {
 						evaluatedCondition = false;
 						ignoreAll = !(evaluatedCondition) ? true : false;
 					}
+				}
+
+				bool endReached = false;
+
+				while (curIdxCpy < parser->tokenList.elements) {
+					if (parse_peek(*parser, curIdxCpy).type == T_END) {
+						endReached = true;
+						break;
+					}
+
+					++curIdxCpy;
+				}
+
+				if (!(endReached)) {
+					free(head_node);
+					printf("SyntaxError: Expected 'end' after conditional.\n");
+					parser->error = true;
+					return NULL;
 				}
 
 				break;
