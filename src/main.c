@@ -75,7 +75,7 @@ int main(int argc, char* argv[]) {
 	size_t filesize = ftell(fp);
 	fseek(fp, 0, SEEK_SET);
 
-	buffer = (char*)malloc(sizeof(char) * filesize);
+	buffer = (char*)calloc(filesize + 1, sizeof(char));
 	fread(buffer, filesize, 1, fp);
 
 	uint32_t idxx = 0;
