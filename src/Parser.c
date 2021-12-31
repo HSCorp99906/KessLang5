@@ -9,7 +9,7 @@ struct AST_NODE** parse(struct Parser* parser, size_t* s) {
 
 	bool ignoreAll = false;
 
-	while (parser->curIndex < parser->tokenList.elements - 1) {
+	while (parser->curIndex < parser->tokenList.elements) {
 		if (ignoreAll) {
 			if (parse_peek(*parser, parser->curIndex).type != T_END) {
 				++parser->curIndex;
@@ -22,6 +22,31 @@ struct AST_NODE** parse(struct Parser* parser, size_t* s) {
 
 		switch (parse_peek(*parser, parser->curIndex).type) {
 			case T_END:
+				++parser->curIndex;
+				break;
+			case T_VAR:
+				if (parse_peek(*parser, parser->curIndex + 1).type == T_EQUALS) {
+
+					struct Var* newVar = (struct Var*)malloc(sizeof(struct Var));
+					newVar->key = parse_peek(*parser, parser->curIndex).tok;
+					parser->curIndex += 2;
+					newVar->value = &parser->tokenList.tokens[parser->curIndex].tok;
+
+					switch (parse_peek(*parser, parser->curIndex).type) {
+						case T_INT:
+							newVar->datatype = INT;
+							break;
+						default:
+							printf("VarError: Failed to read variable type.\n");
+							free(head_node);
+							head_node = NULL;
+							parser->error = true;
+							return NULL;
+					}
+
+					var_insert(&varTable, newVar);
+				}
+
 				++parser->curIndex;
 				break;
 			case T_TRUE:

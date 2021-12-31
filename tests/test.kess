@@ -1,3 +1,2 @@
-if true do
-	print "is true";
-end;
+$var = 20;
+print $var;

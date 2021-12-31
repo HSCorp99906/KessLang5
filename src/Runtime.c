@@ -16,12 +16,10 @@ void execute(struct AST_NODE** ast) {
 	struct AST_NODE* node = ast_locate(ast, "type");
 
 	if (strcmp(node->value, "print-statement") == 0) {
-		if (strcmp(node->child->child->value, "true") != 0) {  // Is var str boolean.
+		if (strcmp(node->child->child->value, "true") != 0) {   // If value is true then we are printing a var. 
 			printf("%s\n", node->child->value);
 		} else {
-
 			struct Var* printVar = varLocate(varTable, node->child->value);
-
 			if (!(printVar)) {
 				printf("FATAL: Please report this issue on our GitHub.", node->child->value);
 			} else {
@@ -31,6 +29,10 @@ void execute(struct AST_NODE** ast) {
 							int* addr = (int*)printVar->value;
 							printf("%p\n", addr);
 						}
+						break;
+					case INT:
+						char** valuePtr = (char**)printVar->value;
+						printf("%s\n", *valuePtr);
 						break;
 				}
 			}

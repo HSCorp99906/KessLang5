@@ -250,7 +250,7 @@ void tokenize(toklist_t* toklist, struct Lexer* lexer, char* line) {
 				}	
 
 				++lexer->colNum;
-			}
+			} 
 	
 			add_element(toklist, create_token(value, T_VAR, true, true));
 			value_idx = 0;
@@ -261,20 +261,101 @@ void tokenize(toklist_t* toklist, struct Lexer* lexer, char* line) {
 			if (lexer->error) {
 				break;
 			}
-		}
+		} else if (captureVar) {
+				size_t varKeySize = 2;
+				unsigned int varKeyIdx = 0;
+				char* varKey = (char*)calloc(2, sizeof(char));
+
+				while (lexer->colNum < strlen(line)) {
+					lexer->curChar = line[lexer->colNum];
+
+					if (lexer->curChar == ';' || lexer->curChar == ' ') {
+						break;
+					}
+
+					 varKey[varKeyIdx] = lexer->curChar;
+					 ++varKeyIdx;
+					 ++varKeySize;
+					 varKey = (char*)realloc(varKey, sizeof(char) * varKeySize);
+					 ++lexer->colNum;
+				}
+
+
+				bool collectValue = false;
+				size_t varValueSize = 2;
+				unsigned int varValueIdx = 0;
+				char* varValue = (char*)calloc(2, sizeof(char));
+
+				bool isAnInt = false;
+				bool assignment = false;
+
+				while (lexer->colNum < strlen(line)) {
+					lexer->curChar = line[lexer->colNum];
+	
+
+					if (lexer->curChar == ';') {
+						break;
+					}
+
+					
+					if (lexer->curChar == '=') {
+						if (line[lexer->colNum + 1] != '=') {
+							assignment = true;	
+						}
+					} else if (isint(lexer->curChar) && !(collectValue)) {
+						collectValue = true;
+						varValue[varValueIdx] = lexer->curChar;
+						++varValueIdx;
+						++varValueSize;
+						varValue = (char*)realloc(varValue, sizeof(char) * varValueSize);
+					} else if (collectValue) {
+						varValue[varValueIdx] = lexer->curChar;
+						++varValueIdx;
+						++varValueSize;
+						varValue = (char*)realloc(varValue, sizeof(char) * varValueSize);
+					}
+
+					++lexer->colNum;
+				}
+
+				if (isint(*varValue)) {
+					isAnInt = true;
+				}
+
+				add_element(toklist, create_token(varKey, T_VAR, false, true));
+				
+				// Added '=' token to token list.
+				if (assignment) {
+					add_element(toklist, create_token("=", T_EQUALS, false, false));
+				}
+
+				// Added value to list.
+				if (isAnInt) {
+					add_element(toklist, create_token(varValue, T_INT, true, true));
+				}
+
+				captureVar = false;
+			}
 		
+		// BUFFER UPDATE
 		buffer[bufIdx] = lexer->curChar;
 		++bufIdx;
 		++bufsize;
 
+		// VARIABLE CHECK
 		if (lexer->curChar == '$' && line[lexer->colNum + 1] == ' ') {
 			printf("SyntaxError: Invalid Syntax.\nLine %d\n", lexer->lineNum);
 		} else if (lexer->curChar == '$') {
+			memset(buffer, '\0', bufsize);
 			captureVar = true;
+			bufIdx = 0;
+			bufsize = 1;
+			buffer = (char*)realloc(buffer, sizeof(char));
 			++lexer->colNum;
 			continue;
 		}
 
+		// TOKEN CHECKS
 		if (lexer->curChar == ';') {
 			memset(buffer, '\0', bufsize);
 			bufIdx = 0;

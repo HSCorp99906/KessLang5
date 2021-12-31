@@ -142,8 +142,6 @@ int main(int argc, char* argv[]) {
 
 			destroy_tokenlist(&toklist);
 			exit(1);
-
-			break;
 		} else if (ast == NULL) {
 			break;
 		}

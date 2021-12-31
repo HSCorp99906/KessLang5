@@ -1,4 +1,6 @@
 #include "../include/Token.h"
+#include <stdio.h>
+
 
 bool isint(char e) {
 	switch (e) {
