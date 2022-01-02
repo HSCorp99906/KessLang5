@@ -99,6 +99,8 @@ void tokenize(toklist_t* toklist, struct Lexer* lexer, char* line) {
 			bool quoteAllowed = true;
 			unsigned short quoteCount = 0;
 
+			bool semicolon = false;
+
 			while (lexer->colNum < strlen(line)) {
 				lexer->curChar = line[lexer->colNum];
 				if (lexer->curChar == '"') {
@@ -106,13 +108,16 @@ void tokenize(toklist_t* toklist, struct Lexer* lexer, char* line) {
 					if (!(quoteAllowed)) {
 						print_inst = false;
 						captureString = false;
-						add_element(toklist, create_token(str, T_STR, false, true));
+						add_element(toklist, create_token(str, T_STR, false, lexer->lineNum));
+						free(str);
 						break;
 					}
 					
 					quoteAllowed = false;
 					++lexer->colNum;
 					continue;
+				} else if (lexer->curChar == ';') {
+					semicolon = true;
 				}
 
 				if (quoteCount == 2) {
@@ -126,6 +131,13 @@ void tokenize(toklist_t* toklist, struct Lexer* lexer, char* line) {
 				++strSize;
 				++lexer->colNum;
 				str = (char*)realloc(str, sizeof(char) * strSize);
+			}
+
+			if (quoteCount == 0 && !(semicolon)) {
+				free(str);
+				printf("SyntaxError: Missing semicolon.\nLine %d\n", lexer->lineNum);
+				lexer->error = true;
+				break;
 			}
 
 			 if (quoteCount < 2 && quoteCount != 0) {
@@ -148,7 +160,8 @@ void tokenize(toklist_t* toklist, struct Lexer* lexer, char* line) {
 					lexer->error = true;
 					break;
 				} else {
-					add_element(toklist, create_token(str, T_VAR, false, true));
+					add_element(toklist, create_token(str, T_VAR, false, lexer->lineNum));
+					free(str);
 				}
 			}
 			
@@ -166,7 +179,7 @@ void tokenize(toklist_t* toklist, struct Lexer* lexer, char* line) {
 
 				if (getVarName) {	
 					if (lexer->curChar == ';') {
-						add_element(toklist, create_token(";", T_END_STATEMENT, false, false));
+						add_element(toklist, create_token(";", T_END_STATEMENT, false, lexer->lineNum));
 						break;
 					}
 
@@ -222,10 +235,10 @@ void tokenize(toklist_t* toklist, struct Lexer* lexer, char* line) {
 						value = (char*)realloc(value, sizeof(char) * value_size);
 						break;
 					case '=':
-						add_element(toklist, create_token(value, T_INT, true, true));
+						add_element(toklist, create_token(value, T_INT, true, lexer->lineNum));
 
 						if (line[lexer->colNum + 1] == '>') {
-							add_element(toklist, create_token("=>", T_ARROW, false, false));
+							add_element(toklist, create_token("=>", T_ARROW, false, lexer->lineNum));
 						}
 	
 						forbidIntCapture = true;
@@ -252,11 +265,12 @@ void tokenize(toklist_t* toklist, struct Lexer* lexer, char* line) {
 				++lexer->colNum;
 			} 
 	
-			add_element(toklist, create_token(value, T_VAR, true, true));
+			add_element(toklist, create_token(value, T_VAR, true, lexer->lineNum));
 			value_idx = 0;
 			value_size = 2;
 			push_inst = false;
-			add_element(toklist, create_token(";", T_END_STATEMENT, false, false));
+			add_element(toklist, create_token(";", T_END_STATEMENT, false, lexer->lineNum));
+			free(value);
 
 			if (lexer->error) {
 				break;
@@ -322,19 +336,21 @@ void tokenize(toklist_t* toklist, struct Lexer* lexer, char* line) {
 					isAnInt = true;
 				}
 
-				add_element(toklist, create_token(varKey, T_VAR, false, true));
+				add_element(toklist, create_token(varKey, T_VAR, false, lexer->lineNum));
 				
 				// Added '=' token to token list.
 				if (assignment) {
-					add_element(toklist, create_token("=", T_EQUALS, false, false));
+					add_element(toklist, create_token("=", T_EQUALS, false, lexer->lineNum));
 				}
 
 				// Added value to list.
 				if (isAnInt) {
-					add_element(toklist, create_token(varValue, T_INT, true, true));
+					add_element(toklist, create_token(varValue, T_INT, true, lexer->lineNum));
 				}
 
 				captureVar = false;
+				free(varKey);
+				free(varValue);
 			}
 		
 		// BUFFER UPDATE
@@ -371,7 +387,7 @@ void tokenize(toklist_t* toklist, struct Lexer* lexer, char* line) {
 			++lexer->colNum;
 			print_inst = true;
 			captureString = true;
-			add_element(toklist, create_token("print", T_PRINT, false, false));
+			add_element(toklist, create_token("print", T_PRINT, false, lexer->lineNum));
 			continue;
 		} else if (strcmp(buffer, "push") == 0) {
 			memset(buffer, '\0', bufsize);
@@ -380,7 +396,7 @@ void tokenize(toklist_t* toklist, struct Lexer* lexer, char* line) {
 			buffer = (char*)realloc(buffer, sizeof(char));
 			++lexer->colNum;
 			push_inst = true;
-			add_element(toklist, create_token("push", T_PUSH, false, false));
+			add_element(toklist, create_token("push", T_PUSH, false, lexer->lineNum));
 			continue;
 		} else if (strcmp(buffer, "if") == 0) {
 			memset(buffer, '\0', bufsize);
@@ -388,7 +404,7 @@ void tokenize(toklist_t* toklist, struct Lexer* lexer, char* line) {
 			bufsize = 1;
 			buffer = (char*)realloc(buffer, sizeof(char));
 			++lexer->colNum;
-			add_element(toklist, create_token("if", T_IF_STATEMENT, false, false));
+			add_element(toklist, create_token("if", T_IF_STATEMENT, false, lexer->lineNum));
 			continue;
 		} else if (strcmp(buffer, "do") == 0) {
 			memset(buffer, '\0', bufsize);
@@ -396,7 +412,7 @@ void tokenize(toklist_t* toklist, struct Lexer* lexer, char* line) {
 			bufsize = 1;
 			buffer = (char*)realloc(buffer, sizeof(char));
 			++lexer->colNum;
-			add_element(toklist, create_token("do", T_DO, false, false));
+			add_element(toklist, create_token("do", T_DO, false, lexer->lineNum));
 			ignoreMissingSemicolon = true;
 			continue;
 		} else if (strcmp(buffer, "true") == 0) {
@@ -405,7 +421,7 @@ void tokenize(toklist_t* toklist, struct Lexer* lexer, char* line) {
 			bufsize = 1;
 			buffer = (char*)realloc(buffer, sizeof(char));
 			++lexer->colNum;
-			add_element(toklist, create_token("true", T_TRUE, false, false));
+			add_element(toklist, create_token("true", T_TRUE, false, lexer->lineNum));
 			continue;
 		} else if (strcmp(buffer, "false") == 0) {
 			memset(buffer, '\0', bufsize);
@@ -413,7 +429,7 @@ void tokenize(toklist_t* toklist, struct Lexer* lexer, char* line) {
 			bufsize = 1;
 			buffer = (char*)realloc(buffer, sizeof(char));
 			++lexer->colNum;
-			add_element(toklist, create_token("false", T_FALSE, false, false));
+			add_element(toklist, create_token("false", T_FALSE, false, lexer->lineNum));
 			continue;
 		} else if (strcmp(buffer, "end") == 0) { 
 			memset(buffer, '\0', bufsize);
@@ -421,7 +437,15 @@ void tokenize(toklist_t* toklist, struct Lexer* lexer, char* line) {
 			bufsize = 1;
 			buffer = (char*)realloc(buffer, sizeof(char));
 			++lexer->colNum;
-			add_element(toklist, create_token("end", T_END, false, false));
+			add_element(toklist, create_token("end", T_END, false, lexer->lineNum));
+			continue;
+		} else if (lexer->curChar == '+') {
+			memset(buffer, '\0', bufsize);
+			bufIdx = 0;
+			bufsize = 1;
+			buffer = (char*)realloc(buffer, sizeof(char));
+			++lexer->colNum;
+			add_element(toklist, create_token("+", T_PLUS, false, lexer->lineNum));
 			continue;
 		}
 

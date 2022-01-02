@@ -22,6 +22,7 @@ typedef enum TokenType {
 	T_FALSE,
 	T_END,
 	T_EQUALS,
+	T_PLUS,
 } toktype_t;
 
 typedef struct Token {
@@ -30,6 +31,7 @@ typedef struct Token {
 	bool isint;
 	bool lastTok;
 	bool heapAlloc;
+	unsigned long lineNum;
 } tok_t;
 
 
@@ -43,7 +45,7 @@ typedef struct Tokenlist {
 void init_tokenlist(toklist_t* tl);
 void destroy_tokenlist(toklist_t* tl);
 void add_element(toklist_t* tl, tok_t element);
-tok_t create_token(char* tok, toktype_t type, bool isint, bool heapAlloc);
+tok_t create_token(char* tok, toktype_t type, bool isint, unsigned long lineNum);
 bool isint(char e);
 
 #endif

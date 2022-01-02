@@ -48,13 +48,13 @@ void add_element(toklist_t* tl, tok_t element) {
 }
 
 
-tok_t create_token(char* tok, toktype_t type, bool isint, bool heapAlloc) {
+tok_t create_token(char* tok, toktype_t type, bool isint, unsigned long lineNum) {
 	tok_t token = {
 		.type = type,
 		.isint = isint,
 		.tok = (char*)calloc(30, sizeof(char)),
 		.lastTok = false,
-		.heapAlloc = heapAlloc,
+		.lineNum = lineNum,
 	};
 
 	const char* eol = "\0";

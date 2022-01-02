@@ -9,6 +9,7 @@
 typedef enum DataType {
 	INT,
 	INT_PTR,
+	STR,
 } datatype_t;
 
 
